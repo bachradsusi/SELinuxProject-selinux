@@ -1,3 +1,22 @@
+2.4 2014-08-13
+	* Add semodule option to set store root path in semanage.conf and the
+	  semodule command.
+	* Add semanage.conf option to set an alternative root path for policy
+	  store. 
+	* Add support for High Level Language (HLL) to CIL compilers. The HLL
+	  compiler path is configurable, but should be placed in 
+	  /usr/libexec/selinux/hll by default.
+	* Create a policy migration script for migrating the policy store from
+	  /etc/selinux to /var/lib/selinux.
+	* Use libcil to compile modules.
+	* Use symbolic versioning to maintain ABI compatibility for old install
+	  functions.
+	* Add a target-platform option to semanage.conf to control how policies
+	  are built.
+	* Add API to handle modules and source policies, moving module store to
+	  /var/lib/selinux
+	* Only try to compile file contexts if they exist.
+
 2.3 2014-05-06
 	* Fix memory leak in semanage_genhomedircon from Thomas Hurd.
 
