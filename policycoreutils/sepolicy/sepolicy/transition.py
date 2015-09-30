@@ -23,12 +23,15 @@
 import sepolicy
 search = sepolicy.search
 info = sepolicy.info
+
+import setools
+
 __all__ = ['setrans', ]
 
 
 def _entrypoint(src):
-    trans = search([sepolicy.ALLOW], {sepolicy.SOURCE: src})
-    return map(lambda y: y[sepolicy.TARGET], filter(lambda x: "entrypoint" in x[sepolicy.PERMS], trans))
+    q = setools.TERuleQuery(sepolicy.policy, ruletype=["allow"], source=src, perms=["entrypoint"])
+    return [str(x.target) for x in q.results()]
 
 
 def _get_trans(src):
