@@ -96,9 +96,9 @@ def get_rpm_nvr_list(package):
 def get_all_ports():
     dict = {}
     for p in sepolicy.info(sepolicy.PORT):
-        if p['type'] == "reserved_port_t" or \
-                p['type'] == "port_t" or \
-                p['type'] == "hi_reserved_port_t":
+        if p.context.type_ == "reserved_port_t" or \
+                p.context.type_ == "port_t" or \
+                p.context.type_ == "hi_reserved_port_t":
             continue
         dict[(p['low'], p['high'], p['protocol'])] = (p['type'], p['range'])
     return dict

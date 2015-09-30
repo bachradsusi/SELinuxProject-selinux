@@ -4,6 +4,7 @@
 # Author: Ryan Hallisey <rhallise@redhat.com>
 
 import _policy
+import setools
 import selinux
 import glob
 PROGNAME = "policycoreutils"
@@ -22,13 +23,17 @@ except IOError:
     import __builtin__
     __builtin__.__dict__['_'] = unicode
 
-TYPE = _policy.TYPE
-ROLE = _policy.ROLE
-ATTRIBUTE = _policy.ATTRIBUTE
-PORT = _policy.PORT
-USER = _policy.USER
-BOOLEAN = _policy.BOOLEAN
-TCLASS = _policy.CLASS
+TYPE = setools.TypeQuery
+ROLE = setools.RoleQuery
+ATTRIBUTE = setools.TypeAttributeQuery
+PORT = setools.PortconQuery
+USER = setools.UserQuery
+BOOLEAN = setools.BoolQuery
+TCLASS = setools.ObjClassQuery
+ROLE_ALLOW = setools.RBACRuleQuery
+TYPE_ALLOW = setools.TERuleQuery
+# SENS = 'sens'
+# CATS = 'cats'
 
 ALLOW = 'allow'
 AUDITALLOW = 'auditallow'
@@ -36,20 +41,21 @@ NEVERALLOW = 'neverallow'
 DONTAUDIT = 'dontaudit'
 SOURCE = 'source'
 TARGET = 'target'
-PERMS = 'permlist'
-CLASS = 'class'
-TRANSITION = 'transition'
-ROLE_ALLOW = 'role_allow'
+PERMS = 'perms'
+CLASS = 'tclass'
+TRANSITION = 'type_transition'
 
 
-def info(setype, name=None):
-    dict_list = _policy.info(setype, name)
-    return dict_list
+def info(setype, **kwargs):
+    # dict_list = _policy.info(setype, name)
+    # policy = setools.SELinuxPolicy()
+    return list(setype(selinuxpolicy, **kwargs).results())
+    # return dict_list
 
 
 def search(types, info={}):
     seinfo = info
-    valid_types = [ALLOW, AUDITALLOW, NEVERALLOW, DONTAUDIT, TRANSITION, ROLE_ALLOW]
+    valid_types = [ALLOW, AUDITALLOW, NEVERALLOW, DONTAUDIT, TRANSITION]
     for setype in types:
         if setype not in valid_types:
             raise ValueError("Type has to be in %s" % valid_types)
@@ -465,7 +471,7 @@ all_types = None
 def get_all_types():
     global all_types
     if all_types == None:
-        all_types = map(lambda x: x['name'], info(TYPE))
+        all_types = [str(x) for x in info(TYPE)]
     return all_types
 
 user_types = None
@@ -474,7 +480,7 @@ user_types = None
 def get_user_types():
     global user_types
     if user_types == None:
-        user_types = info(ATTRIBUTE, "userdomain")[0]["types"]
+        user_types = [str(x) for x in info(TYPE, attrs=["userdomain"])]
     return user_types
 
 role_allows = None
@@ -485,13 +491,13 @@ def get_all_role_allows():
     if role_allows:
         return role_allows
     role_allows = {}
-    for r in search([ROLE_ALLOW]):
-        if r["source"] == "system_r" or r["target"] == "system_r":
+    for r in info(ROLE_ALLOW, ruletype=["allow"]):
+        if r.source == "system_r" or r.target == "system_r":
             continue
-        if r["source"] in role_allows:
-            role_allows[r["source"]].append(r["target"])
+        if str(r.source) in role_allows:
+            role_allows[str(r.source)].append(str(r.target))
         else:
-            role_allows[r["source"]] = [r["target"]]
+            role_allows[str(r.source)] = [str(r.target)]
 
     return role_allows
 
@@ -536,20 +542,17 @@ def gen_port_dict():
     portrecsbynum = {}
     portrecs = {}
     for i in info(PORT):
-        if i['low'] == i['high']:
-            port = str(i['low'])
+        if i.ports.low == i.ports.high:
+            port = str(i.ports.low)
         else:
-            port = "%s-%s" % (str(i['low']), str(i['high']))
+            port = "%s-%s" % (i.ports.low, i.ports.high)
 
-        if (i['type'], i['protocol']) in portrecs:
-            portrecs[(i['type'], i['protocol'])].append(port)
+        if (str(i.context.type_), i._proto_to_text[i.protocol]) in portrecs:
+            portrecs[(str(i.context.type_), i._proto_to_text[i.protocol])].append(port)
         else:
-            portrecs[(i['type'], i['protocol'])] = [port]
+            portrecs[(str(i.context.type_), i._proto_to_text[i.protocol])] = [port]
 
-        if 'range' in i:
-            portrecsbynum[(i['low'], i['high'], i['protocol'])] = (i['type'], i['range'])
-        else:
-            portrecsbynum[(i['low'], i['high'], i['protocol'])] = (i['type'])
+        portrecsbynum[(i.ports.low, i.ports.high, i._proto_to_text[i.protocol])] = (str(i.context.type_), str(i.context.range_))
 
     return (portrecs, portrecsbynum)
 
@@ -559,7 +562,7 @@ all_domains = None
 def get_all_domains():
     global all_domains
     if not all_domains:
-        all_domains = info(ATTRIBUTE, "domain")[0]["types"]
+        all_domains = [str(x) for x in info(TYPE, attrs=["domain"])]
     return all_domains
 
 roles = None
@@ -569,8 +572,11 @@ def get_all_roles():
     global roles
     if roles:
         return roles
-    roles = map(lambda x: x['name'], info(ROLE))
-    roles.remove("object_r")
+    roles = [str(x) for x in info(ROLE)]
+    try:
+        roles.remove("object_r")
+    except:
+        pass
     roles.sort()
     return roles
 
@@ -580,9 +586,14 @@ selinux_user_list = None
 def get_selinux_users():
     global selinux_user_list
     if not selinux_user_list:
-        selinux_user_list = info(USER)
-        for x in selinux_user_list:
-            x['range'] = "".join(x['range'].split(" "))
+        selinux_user_list = []
+        for x in info(USER):
+            selinux_user_list.append({
+                    'name': str(x),
+                    'roles': [str(y) for y in x.roles],
+                    'level': str(x.mls_level),
+                    'range': "".join(str(x.mls_range).split(" "))
+            })
     return selinux_user_list
 
 login_mappings = None
@@ -618,7 +629,7 @@ def get_all_file_types():
     global file_types
     if file_types:
         return file_types
-    file_types = info(ATTRIBUTE, "file_type")[0]["types"]
+    file_types = [x.__str__() for x in info(TYPE, attrs=["file_type"])]
     file_types.sort()
     return file_types
 
@@ -629,7 +640,7 @@ def get_all_port_types():
     global port_types
     if port_types:
         return port_types
-    port_types = info(ATTRIBUTE, "port_type")[0]["types"]
+    port_types = [x.__str__() for x in info(TYPE, attrs=["port_type"])]
     port_types.sort()
     return port_types
 
@@ -639,7 +650,8 @@ bools = None
 def get_all_bools():
     global bools
     if not bools:
-        bools = info(BOOLEAN)
+        bools = [x.__str__() for x in info(BOOLEAN)]
+        bools.sort()
     return bools
 
 
@@ -780,6 +792,7 @@ def policy(policy_file):
     global roles
     global file_types
     global port_types
+    global selinuxpolicy
     all_domains = None
     all_attributes = None
     bools = None
@@ -790,7 +803,8 @@ def policy(policy_file):
     file_types = None
     port_types = None
     try:
-        _policy.policy(policy_file)
+        selinuxpolicy = setools.SELinuxPolicy(policy_file)
+
     except:
         raise ValueError(_("Failed to read %s policy file") % policy_file)
 

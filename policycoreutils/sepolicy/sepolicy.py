@@ -120,7 +120,7 @@ class CheckClass(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         global all_classes
         if not all_classes:
-            all_classes = map(lambda x: x['name'], sepolicy.info(sepolicy.TCLASS))
+            all_classes = [str(x) for x in sepolicy.info(sepolicy.TCLASS)]
         if values not in all_classes:
             raise ValueError("%s must be an SELinux class:\nValid classes: %s" % (values, ", ".join(all_classes)))
 
