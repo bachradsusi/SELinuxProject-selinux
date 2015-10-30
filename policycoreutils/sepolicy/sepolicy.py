@@ -408,8 +408,10 @@ def gen_network_args(parser):
 def communicate(args):
     from sepolicy.communicate import get_types
 
-    writable = get_types(args.source, args.tclass, args.sourceaccess.split(","))
-    readable = get_types(args.target, args.tclass, args.targetaccess.split(","))
+    # writable = get_types(args.source, args.tclass, args.sourceaccess.split(","))
+    writable = setools.TERuleQuery(sepolicy.selinuxpolicy, ruletype=["allow"], source=args.source, tclass=[args.tclass], perms=args.sourceaccess.split(","), perms_subset=True).results()
+    # readable = get_types(args.target, args.tclass, args.targetaccess.split(","))
+    readable = setools.TERuleQuery(sepolicy.selinuxpolicy, ruletype=["allow"], source=args.target, tclass=[args.tclass], perms=args.targetaccess.split(","), perms_subset=True).results()
     out = list(set(writable) & set(readable))
 
     for t in out:

@@ -3,7 +3,7 @@
 # Author: Dan Walsh <dwalsh@redhat.com>
 # Author: Ryan Hallisey <rhallise@redhat.com>
 
-import _policy
+# import _policy
 import setools
 import selinux
 import glob

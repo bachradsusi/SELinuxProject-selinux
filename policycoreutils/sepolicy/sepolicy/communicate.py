@@ -21,6 +21,7 @@
 #
 #
 import sepolicy
+import setools
 import sys
 search = sepolicy.search
 info = sepolicy.info
@@ -42,11 +43,12 @@ def expand_attribute(attribute):
 
 
 def get_types(src, tclass, perm):
-    allows = search([sepolicy.ALLOW], {sepolicy.SOURCE: src, sepolicy.CLASS: tclass, sepolicy.PERMS: perm})
+    # allows = search([sepolicy.ALLOW], {sepolicy.SOURCE: src, sepolicy.CLASS: tclass, sepolicy.PERMS: perm})
+    allows = setools.TERuleQuery(sepolicy.selinuxpolicy, ruletype=["allow"], source=src, tclass=[tclass], perms=perm, perms_subset=True).results()
     if not allows:
         raise ValueError("The %s type is not allowed to %s any types" % (src, ",".join(perm)))
 
-    tlist = []
-    for l in map(lambda y: y[sepolicy.TARGET], filter(lambda x: set(perm).issubset(x[sepolicy.PERMS]), allows)):
-        tlist = tlist + expand_attribute(l)
-    return tlist
+#     tlist = []
+#     for l in map(lambda y: y[sepolicy.TARGET], filter(lambda x: set(perm).issubset(x[sepolicy.PERMS]), allows)):
+#         tlist = tlist + expand_attribute(l)
+    return [str(x.target) for x in allows]
