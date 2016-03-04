@@ -32,7 +32,7 @@ static void avc_init_once(void)
 	}
 }
 
-int selinux_check_access(const char *scon, const char *tcon, const char *class, const char *perm, void *aux) {
+int selinux_check_access_raw(const char *scon, const char *tcon, const char *class, const char *perm, void *aux) {
 	int rc;
 	security_id_t scon_id;
 	security_id_t tcon_id;
@@ -44,38 +44,66 @@ int selinux_check_access(const char *scon, const char *tcon, const char *class, 
 	if (selinux_enabled != 1)
 		return 0;
 
-	rc = avc_context_to_sid(scon, &scon_id);
+	rc = avc_context_to_sid_raw(scon, &scon_id);
 	if (rc < 0)
 		return rc;
 
-	rc = avc_context_to_sid(tcon, &tcon_id);
+	rc = avc_context_to_sid_raw(tcon, &tcon_id);
 	if (rc < 0)
 		return rc;
 
 	(void) avc_netlink_check_nb();
 
-       sclass = string_to_security_class(class);
-       if (sclass == 0) {
-	       rc = errno;
-	       avc_log(SELINUX_ERROR, "Unknown class %s", class);
-	       if (security_deny_unknown() == 0)
+	sclass = string_to_security_class(class);
+	if (sclass == 0) {
+	        rc = errno;
+	        avc_log(SELINUX_ERROR, "Unknown class %s", class);
+	        if (security_deny_unknown() == 0)
 		       return 0;
-	       errno = rc;
-	       return -1;
-       }
+	        errno = rc;
+	        return -1;
+	}
 
-       av = string_to_av_perm(sclass, perm);
-       if (av == 0) {
-	       rc = errno;
-	       avc_log(SELINUX_ERROR, "Unknown permission %s for class %s", perm, class);
-	       if (security_deny_unknown() == 0)
+	av = string_to_av_perm(sclass, perm);
+	if (av == 0) {
+	        rc = errno;
+	        avc_log(SELINUX_ERROR, "Unknown permission %s for class %s", perm, class);
+	        if (security_deny_unknown() == 0)
 		       return 0;
-	       errno = rc;
-	       return -1;
-       }
+	        errno = rc;
+	        return -1;
+	}
 
-       return avc_has_perm (scon_id, tcon_id, sclass, av, NULL, aux);
+	return avc_has_perm (scon_id, tcon_id, sclass, av, NULL, aux);
 }
+
+
+int selinux_check_access(const char *scon, const char *tcon, const char *class, const char *perm, void *aux) {
+	int rc;
+	char * scon_raw, * tcon_raw;
+
+	__selinux_once(once, avc_init_once);
+
+	if (selinux_enabled != 1)
+		return 0;
+
+	rc  = selinux_trans_to_raw_context(scon, &scon_raw);
+	if (rc < 0)
+		return rc;
+
+	rc  = selinux_trans_to_raw_context(tcon, &tcon_raw);
+	if (rc < 0) {
+		freecon(scon_raw);
+		return rc;
+	}
+
+	rc = selinux_check_access_raw(scon_raw, tcon_raw, class, perm, aux);
+
+	freecon(scon_raw);
+	freecon(tcon_raw);
+	return rc;
+}
+
 
 int selinux_check_passwd_access(access_vector_t requested)
 {

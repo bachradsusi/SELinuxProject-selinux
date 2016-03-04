@@ -575,6 +575,7 @@ extern const char *selinux_path(void);
  * and passed the auditdata field
  */
 extern int selinux_check_access(const char * scon, const char * tcon, const char *tclass, const char *perm, void *auditdata);
+extern int selinux_check_access_raw(const char * scon, const char * tcon, const char *tclass, const char *perm, void *auditdata);
 
 /* Check a permission in the passwd class.
    Return 0 if granted or -1 otherwise. */
