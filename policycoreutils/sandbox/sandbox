@@ -36,6 +36,7 @@ import pwd
 import sepolicy
 
 PROGNAME = "policycoreutils"
+BWRAP = "/usr/local/bin/bwrap"
 SEUNSHARE = "/usr/sbin/seunshare"
 SANDBOXSH = "/usr/share/sandbox/sandboxX.sh"
 import gettext
@@ -311,6 +312,8 @@ sandbox [-h] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-
 
         parser = OptionParser(usage=usage)
         parser.disable_interspersed_args()
+        parser.add_option("-b", "--use-bwrap", action="store_true", dest="use_bwrap",
+                          default=False, help=_("use bwrap instead of seunshare"))
         parser.add_option("-i", "--include",
                           action="callback", callback=self.__include,
                           type="string",
@@ -442,11 +445,28 @@ sandbox [-h] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-
 
     def __execute(self):
         try:
-            cmds = [SEUNSHARE, "-Z", self.__execcon]
+            if self.__options.use_bwrap:
+                cmds = [BWRAP,
+                    "--ro-bind", "/", "/",
+                    "--proc", "/proc",
+                    "--unshare-pid",
+                    "--exec-label", self.__execcon
+                ]
+            else:
+                cmds = [SEUNSHARE, "-Z", self.__execcon]
             if self.__options.usecaps:
                 cmds.append('-C')
             if self.__mount:
-                cmds += ["-t", self.__tmpdir, "-h", self.__homedir]
+                if self.__options.use_bwrap:
+                    cmds += [
+                        "--bind", self.__tmpdir, "/tmp",
+                        "--bind", self.__tmpdir, "/home"
+                    ]
+                else:
+                    cmds += ["-t", self.__tmpdir, "-h", self.__homedir]
+
+                if not self.__options.use_bwrap:
+                    cmds += ["--"]
 
                 if self.__options.X_ind:
                     if self.__options.dpi:
@@ -462,9 +482,10 @@ sandbox [-h] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-
 
                     self.__setup_sandboxrc(self.__options.wm)
 
-                    cmds += ["--", SANDBOXSH, self.__options.windowsize, dpi]
+                    cmds += [SANDBOXSH, self.__options.windowsize, dpi]
                 else:
-                    cmds += ["--"] + self.__paths
+                    cmds += self.__paths
+                print(" ".join(cmds))
                 return subprocess.Popen(cmds).wait()
 
             selinux.setexeccon(self.__execcon)
