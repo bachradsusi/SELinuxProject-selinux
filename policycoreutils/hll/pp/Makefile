@@ -1,5 +1,5 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 INCLUDEDIR ?= $(PREFIX)/include
 MANDIR = $(PREFIX)/share/man
 LIBDIR ?= $(PREFIX)/lib
@@ -21,8 +21,8 @@ pp: $(PP_OBJS)
 	$(CC) $(CFLAGS) -c -o $@ $^
 
 install: all
-	-mkdir -p $(HLLDIR)
-	install -m 755 pp $(HLLDIR)
+	-mkdir -p $(DESTDIR)$(HLLDIR)
+	install -m 755 pp $(DESTDIR)$(HLLDIR)
 
 relabel:
 

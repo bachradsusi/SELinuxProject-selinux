@@ -1,5 +1,5 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 LIBDIR ?= $(PREFIX)/lib
 SBINDIR ?= $(PREFIX)/sbin
 LIBSEPOLA ?= $(LIBDIR)/libsepol.a
@@ -12,11 +12,11 @@ TARGETS=$(patsubst %.c,%,$(sort $(wildcard *.c)))
 
 all: $(TARGETS)
 
-$(TARGETS): ../src/mcstrans.o ../src/mls_level.o $(LIBSEPOLA)
+$(TARGETS): ../src/mcstrans.o ../src/mls_level.o $(DESTDIR)$(LIBSEPOLA)
 
 install: all
-	-mkdir -p $(SBINDIR)
-	install -m 755 $(TARGETS) $(SBINDIR)
+	-mkdir -p $(DESTDIR)$(SBINDIR)
+	install -m 755 $(TARGETS) $(DESTDIR)$(SBINDIR)
 
 test:
 	./mlstrans-test-runner.py ../test/*.test

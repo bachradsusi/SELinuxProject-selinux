@@ -1,5 +1,5 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 INCLUDEDIR ?= $(PREFIX)/include
 BINDIR ?= $(PREFIX)/bin
 LIBDIR ?= $(PREFIX)/lib
@@ -10,13 +10,13 @@ CFLAGS ?= -Werror -Wall -W
 
 all: semodule_deps
 
-semodule_deps:  semodule_deps.o $(LIBSEPOLA)
+semodule_deps:  semodule_deps.o $(DESTDIR)$(LIBSEPOLA)
 
 install: all
-	-mkdir -p $(BINDIR)
-	install -m 755 semodule_deps $(BINDIR)
-	test -d $(MANDIR)/man8 || install -m 755 -d $(MANDIR)/man8
-	install -m 644 semodule_deps.8 $(MANDIR)/man8/
+	-mkdir -p $(DESTDIR)$(BINDIR)
+	install -m 755 semodule_deps $(DESTDIR)$(BINDIR)
+	test -d $(DESTDIR)$(MANDIR)/man8 || install -m 755 -d $(DESTDIR)$(MANDIR)/man8
+	install -m 644 semodule_deps.8 $(DESTDIR)$(MANDIR)/man8/
 
 relabel:
 

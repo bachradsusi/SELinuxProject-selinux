@@ -1,13 +1,13 @@
 PYTHON ?= python
 
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 LIBDIR ?= $(PREFIX)/lib
 BINDIR ?= $(PREFIX)/bin
 DATADIR ?= $(PREFIX)/share
 MANDIR ?= $(PREFIX)/share/man
 LOCALEDIR ?= /usr/share/locale
-BASHCOMPLETIONDIR ?= $(DESTDIR)/usr/share/bash-completion/completions
+BASHCOMPLETIONDIR ?= /usr/share/bash-completion/completions
 SHAREDIR ?= $(PREFIX)/share/sandbox
 CFLAGS ?= -Wall -Werror -Wextra -W
 override CFLAGS += -DPACKAGE="policycoreutils" -DSHARED -shared
@@ -31,12 +31,12 @@ test:
 
 install:
 	$(PYTHON) setup.py install `test -n "$(DESTDIR)" && echo --root $(DESTDIR)`
-	[ -d $(BINDIR) ] || mkdir -p $(BINDIR)
-	install -m 755 sepolicy.py $(BINDIR)/sepolicy
-	(cd $(BINDIR); ln -sf sepolicy sepolgen)
-	-mkdir -p $(MANDIR)/man8
-	install -m 644 *.8 $(MANDIR)/man8
-	-mkdir -p $(BASHCOMPLETIONDIR)
-	install -m 644 $(BASHCOMPLETIONS) $(BASHCOMPLETIONDIR)/sepolicy
+	[ -d $(DESTDIR)$(BINDIR) ] || mkdir -p $(DESTDIR)$(BINDIR)
+	install -m 755 sepolicy.py $(DESTDIR)$(BINDIR)/sepolicy
+	(cd $(DESTDIR)$(BINDIR); ln -sf sepolicy sepolgen)
+	-mkdir -p $(DESTDIR)$(MANDIR)/man8
+	install -m 644 *.8 $(DESTDIR)$(MANDIR)/man8
+	-mkdir -p $(DESTDIR)$(BASHCOMPLETIONDIR)
+	install -m 644 $(BASHCOMPLETIONS) $(DESTDIR)$(BASHCOMPLETIONDIR)/sepolicy
 
 relabel:

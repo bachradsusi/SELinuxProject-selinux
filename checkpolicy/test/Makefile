@@ -1,7 +1,7 @@
 #
 # Makefile for building the dispol program
 #
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 BINDIR ?= $(PREFIX)/bin
 LIBDIR ?= $(PREFIX)/lib
 INCLUDEDIR ?= $(PREFIX)/include
@@ -11,9 +11,9 @@ CFLAGS ?= -g -Wall -W -Werror -O2 -pipe
 
 all: dispol dismod
 
-dispol: dispol.o $(LIBSEPOLA)
+dispol: dispol.o $(DESTDIR)$(LIBSEPOLA)
 
-dismod: dismod.o $(LIBSEPOLA)
+dismod: dismod.o $(DESTDIR)$(LIBSEPOLA)
 
 clean:
 	-rm -f dispol dismod *.o 

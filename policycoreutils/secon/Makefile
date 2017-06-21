@@ -1,5 +1,5 @@
 # secon tool - command-line context
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 INCLUDEDIR ?= $(PREFIX)/include
 BINDIR ?= $(PREFIX)/bin
 MANDIR ?= $(PREFIX)/share/man
@@ -18,13 +18,13 @@ secon: secon.o
 install-nogui: install
 
 install: all
-	install -m 755 secon $(BINDIR);
+	install -m 755 secon $(DESTDIR)$(BINDIR);
 
-	test -d $(MANDIR)/man1 || install -m 755 -d $(MANDIR)/man1
-	install -m 644 secon.1 $(MANDIR)/man1
+	test -d $(DESTDIR)$(MANDIR)/man1 || install -m 755 -d $(DESTDIR)$(MANDIR)/man1
+	install -m 644 secon.1 $(DESTDIR)$(MANDIR)/man1
 
 relabel:
-	/sbin/restorecon $(BINDIR)/secon
+	/sbin/restorecon $(DESTDIR)$(BINDIR)/secon
 
 clean:
 	rm -f *.o core* secon *~ *.bak

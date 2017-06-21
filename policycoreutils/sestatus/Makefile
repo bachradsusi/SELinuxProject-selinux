@@ -1,8 +1,8 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 SBINDIR ?= $(PREFIX)/sbin
 MANDIR = $(PREFIX)/share/man
-ETCDIR ?= $(DESTDIR)/etc
+ETCDIR ?= /etc
 LIBDIR ?= $(PREFIX)/lib
 
 CFLAGS ?= -Werror -Wall -W
@@ -14,14 +14,14 @@ all: sestatus
 sestatus: sestatus.o
 
 install: all
-	[ -d $(MANDIR)/man8 ] || mkdir -p $(MANDIR)/man8
-	[ -d $(MANDIR)/man5 ] || mkdir -p $(MANDIR)/man5
-	-mkdir -p $(SBINDIR)
-	install -m 755 sestatus $(SBINDIR)
-	install -m 644 sestatus.8 $(MANDIR)/man8
-	install -m 644 sestatus.conf.5 $(MANDIR)/man5
-	-mkdir -p $(ETCDIR)
-	install -m 644 sestatus.conf $(ETCDIR)
+	[ -d $(DESTDIR)$(MANDIR)/man8 ] || mkdir -p $(DESTDIR)$(MANDIR)/man8
+	[ -d $(DESTDIR)$(MANDIR)/man5 ] || mkdir -p $(DESTDIR)$(MANDIR)/man5
+	-mkdir -p $(DESTDIR)$(SBINDIR)
+	install -m 755 sestatus $(DESTDIR)$(SBINDIR)
+	install -m 644 sestatus.8 $(DESTDIR)$(MANDIR)/man8
+	install -m 644 sestatus.conf.5 $(DESTDIR)$(MANDIR)/man5
+	-mkdir -p $(DESTDIR)$(ETCDIR)
+	install -m 644 sestatus.conf $(DESTDIR)$(ETCDIR)
 
 clean:
 	rm -f sestatus *.o

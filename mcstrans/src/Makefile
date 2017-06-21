@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 LIBDIR ?= $(PREFIX)/lib
-SBINDIR ?= $(DESTDIR)/sbin
-INITDIR ?= $(DESTDIR)/etc/rc.d/init.d
-SYSTEMDDIR ?= $(DESTDIR)/usr/lib/systemd
+SBINDIR ?= /sbin
+INITDIR ?= /etc/rc.d/init.d
+SYSTEMDDIR ?= /usr/lib/systemd
 
 PROG_SRC=mcstrans.c  mcscolor.c  mcstransd.c  mls_level.c
 PROG_OBJS= $(patsubst %.c,%.o,$(PROG_SRC))
@@ -15,18 +15,18 @@ override CFLAGS += -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64
 all: $(PROG)
 
 $(PROG): $(PROG_OBJS)
-	$(CC) $(LDFLAGS) -pie -o $@ $^ -lselinux -lcap -lpcre $(LIBDIR)/libsepol.a
+	$(CC) $(LDFLAGS) -pie -o $@ $^ -lselinux -lcap -lpcre $(DESTDIR)$(LIBDIR)/libsepol.a
 
 %.o:  %.c 
 	$(CC) $(CFLAGS) -fPIE -c -o $@ $<
 
 install: all
-	test -d $(SBINDIR) || install -m 755 -d $(SBINDIR)
-	install -m 755 $(PROG) $(SBINDIR)
-	test -d $(INITDIR) || install -m 755 -d $(INITDIR)
-	install -m 755 $(INITSCRIPT).init $(INITDIR)/$(INITSCRIPT)
-	test -d $(SYSTEMDDIR)/system || install -m 755 -d $(SYSTEMDDIR)/system
-	install -m 644 mcstrans.service $(SYSTEMDDIR)/system/
+	test -d $(DESTDIR)$(SBINDIR) || install -m 755 -d $(DESTDIR)$(SBINDIR)
+	install -m 755 $(PROG) $(DESTDIR)$(SBINDIR)
+	test -d $(DESTDIR)$(INITDIR) || install -m 755 -d $(DESTDIR)$(INITDIR)
+	install -m 755 $(INITSCRIPT).init $(DESTDIR)$(INITDIR)/$(INITSCRIPT)
+	test -d $(DESTDIR)$(SYSTEMDDIR)/system || install -m 755 -d $(DESTDIR)$(SYSTEMDDIR)/system
+	install -m 644 mcstrans.service $(DESTDIR)$(SYSTEMDDIR)/system/
 
 clean: 
 	-rm -f $(OBJS) $(LOBJS) $(TARGET) $(PROG) $(PROG_OBJS) *~ \#*

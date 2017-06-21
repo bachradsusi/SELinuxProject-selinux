@@ -1,7 +1,7 @@
 #
 # Makefile for building the checkpolicy program
 #
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 BINDIR ?= $(PREFIX)/bin
 MANDIR ?= $(PREFIX)/share/man
 LIBDIR ?= $(PREFIX)/lib
@@ -26,9 +26,9 @@ GENERATED=lex.yy.c y.tab.c y.tab.h
 all:  $(TARGETS)
 	$(MAKE) -C test
 
-checkpolicy: $(CHECKPOLOBJS) $(LIBSEPOLA)
+checkpolicy: $(CHECKPOLOBJS) $(DESTDIR)$(LIBSEPOLA)
 
-checkmodule: $(CHECKMODOBJS) $(LIBSEPOLA)
+checkmodule: $(CHECKMODOBJS) $(DESTDIR)$(LIBSEPOLA)
 
 %.o: %.c 
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -46,15 +46,15 @@ lex.yy.c: policy_scan.l y.tab.c
 	$(LEX) policy_scan.l
 
 install: all
-	-mkdir -p $(BINDIR)
-	-mkdir -p $(MANDIR)/man8
-	install -m 755 $(TARGETS) $(BINDIR)	
-	install -m 644 checkpolicy.8 $(MANDIR)/man8
-	install -m 644 checkmodule.8 $(MANDIR)/man8
+	-mkdir -p $(DESTDIR)$(BINDIR)
+	-mkdir -p $(DESTDIR)$(MANDIR)/man8
+	install -m 755 $(TARGETS) $(DESTDIR)$(BINDIR)
+	install -m 644 checkpolicy.8 $(DESTDIR)$(MANDIR)/man8
+	install -m 644 checkmodule.8 $(DESTDIR)$(MANDIR)/man8
 
 relabel: install
-	/sbin/restorecon $(BINDIR)/checkpolicy
-	/sbin/restorecon $(BINDIR)/checkmodule
+	/sbin/restorecon $(DESTDIR)$(BINDIR)/checkpolicy
+	/sbin/restorecon $(DESTDIR)$(BINDIR)/checkmodule
 
 clean:
 	-rm -f $(TARGETS) $(CHECKPOLOBJS) $(CHECKMODOBJS) y.tab.c y.tab.h lex.yy.c

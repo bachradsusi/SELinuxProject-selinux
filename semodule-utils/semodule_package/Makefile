@@ -1,5 +1,5 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
+PREFIX ?= /usr
 INCLUDEDIR ?= $(PREFIX)/include
 BINDIR ?= $(PREFIX)/bin
 LIBDIR ?= $(PREFIX)/lib
@@ -13,12 +13,12 @@ all: semodule_package semodule_unpackage
 semodule_package:  semodule_package.o 
 
 install: all
-	-mkdir -p $(BINDIR)
-	install -m 755 semodule_package $(BINDIR)
-	install -m 755 semodule_unpackage $(BINDIR)
-	test -d $(MANDIR)/man8 || install -m 755 -d $(MANDIR)/man8
-	install -m 644 semodule_package.8 $(MANDIR)/man8/
-	install -m 644 semodule_unpackage.8 $(MANDIR)/man8/
+	-mkdir -p $(DESTDIR)$(BINDIR)
+	install -m 755 semodule_package $(DESTDIR)$(BINDIR)
+	install -m 755 semodule_unpackage $(DESTDIR)$(BINDIR)
+	test -d $(DESTDIR)$(MANDIR)/man8 || install -m 755 -d $(DESTDIR)$(MANDIR)/man8
+	install -m 644 semodule_package.8 $(DESTDIR)$(MANDIR)/man8/
+	install -m 644 semodule_unpackage.8 $(DESTDIR)$(MANDIR)/man8/
 
 relabel:
 

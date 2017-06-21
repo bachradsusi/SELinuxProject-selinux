@@ -1,6 +1,6 @@
 # Installation directories.
-PREFIX ?= $(DESTDIR)/usr
-SBINDIR ?= $(DESTDIR)/sbin
+PREFIX ?= /usr
+SBINDIR ?= /sbin
 MANDIR ?= $(PREFIX)/share/man
 LOCALEDIR ?= $(PREFIX)/share/locale
 
@@ -8,10 +8,10 @@ LOCALEDIR ?= $(PREFIX)/share/locale
 all: fixfiles
 
 install: all
-	-mkdir -p $(SBINDIR)
-	install -m 755 fixfiles $(SBINDIR)
-	-mkdir -p $(MANDIR)/man8
-	install -m 644 fixfiles.8 $(MANDIR)/man8/
+	-mkdir -p $(DESTDIR)$(SBINDIR)
+	install -m 755 fixfiles $(DESTDIR)$(SBINDIR)
+	-mkdir -p $(DESTDIR)$(MANDIR)/man8
+	install -m 644 fixfiles.8 $(DESTDIR)$(MANDIR)/man8/
 
 clean:
 
