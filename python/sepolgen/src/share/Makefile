@@ -1,4 +1,5 @@
-SHAREDIR ?= /var/lib/sepolgen
+PREFIX ?= /
+SHAREDIR ?= $(PREFIX)/var/lib/sepolgen
 
 all:
 

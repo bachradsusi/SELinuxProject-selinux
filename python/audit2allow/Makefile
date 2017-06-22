@@ -1,19 +1,19 @@
 PYTHON ?= python
 
 # Installation directories.
-PREFIX ?= /usr
-BINDIR ?= $(PREFIX)/bin
-LIBDIR ?= $(PREFIX)/lib
-MANDIR ?= $(PREFIX)/share/man
+PREFIX ?= /
+BINDIR ?= $(PREFIX)/usr/bin
+LIBDIR ?= $(PREFIX)/usr/lib
+MANDIR ?= $(PREFIX)/usr/share/man
 LOCALEDIR ?= /usr/share/locale
-INCLUDEDIR ?= $(PREFIX)/include
+INCLUDEDIR ?= $(PREFIX)/usr/include
 LIBSEPOLA ?= $(LIBDIR)/libsepol.a
 
 CFLAGS ?= -Werror -Wall -W
 
 all: audit2why sepolgen-ifgen-attr-helper
 
-sepolgen-ifgen-attr-helper: sepolgen-ifgen-attr-helper.o $(DESTDIR)$(LIBSEPOLA)
+sepolgen-ifgen-attr-helper: sepolgen-ifgen-attr-helper.o $(LIBSEPOLA)
 
 audit2why:
 	ln -sf audit2allow audit2why

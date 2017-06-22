@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= /usr
-LIBDIR ?= $(PREFIX)/lib
-SBINDIR ?= /sbin
-INITDIR ?= /etc/rc.d/init.d
-SYSTEMDDIR ?= /usr/lib/systemd
+PREFIX ?= /
+LIBDIR ?= $(PREFIX)/usr/lib
+SBINDIR ?= $(PREFIX)/sbin
+INITDIR ?= $(PREFIX)/etc/rc.d/init.d
+SYSTEMDDIR ?= $(PREFIX)/usr/lib/systemd
 
 PROG_SRC=mcstrans.c  mcscolor.c  mcstransd.c  mls_level.c
 PROG_OBJS= $(patsubst %.c,%.o,$(PROG_SRC))

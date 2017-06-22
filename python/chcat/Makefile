@@ -1,8 +1,8 @@
 # Installation directories.
-PREFIX ?= /usr
-BINDIR ?= $(PREFIX)/bin
-MANDIR ?= $(PREFIX)/share/man
-LOCALEDIR ?= $(PREFIX)/share/locale
+PREFIX ?= /
+BINDIR ?= $(PREFIX)/usr/bin
+MANDIR ?= $(PREFIX)/usr/share/man
+LOCALEDIR ?= $(PREFIX)/usr/share/locale
 
 .PHONY: all
 all: chcat

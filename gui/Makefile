@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= /usr
-BINDIR ?= $(PREFIX)/bin
-SHAREDIR ?= $(PREFIX)/share/system-config-selinux
-DATADIR ?= $(PREFIX)/share
-MANDIR ?= $(PREFIX)/share/man
+PREFIX ?= /
+BINDIR ?= $(PREFIX)/usr/bin
+SHAREDIR ?= $(PREFIX)/usr/share/system-config-selinux
+DATADIR ?= $(PREFIX)/usr/share
+MANDIR ?= $(PREFIX)/usr/share/man
 
 TARGETS= \
 booleansPage.py \

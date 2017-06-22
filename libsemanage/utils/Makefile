@@ -1,6 +1,6 @@
 # Installation directories.
-PREFIX ?= /usr
-LIBEXECDIR ?= $(PREFIX)/libexec
+PREFIX ?= /
+LIBEXECDIR ?= $(PREFIX)/usr/libexec
 SELINUXEXECDIR ?= $(LIBEXECDIR)/selinux/
 
 all:

@@ -1,6 +1,6 @@
 # Installation directories.
-PREFIX ?= /usr
-INCDIR ?= $(PREFIX)/include/sepol
+PREFIX ?= /
+INCDIR ?= $(PREFIX)/usr/include/sepol
 CILDIR ?= ../cil
 
 all:

@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= /usr
-INCLUDEDIR ?= $(PREFIX)/include
-SBINDIR ?= $(PREFIX)/sbin
-MANDIR = $(PREFIX)/share/man
-LIBDIR ?= $(PREFIX)/lib
+PREFIX ?= /
+INCLUDEDIR ?= $(PREFIX)/usr/include
+SBINDIR ?= $(PREFIX)/usr/sbin
+MANDIR = $(PREFIX)/usr/share/man
+LIBDIR ?= $(PREFIX)/usr/lib
 
 CFLAGS ?= -Werror -Wall -W
 override LDLIBS += -lsepol -lselinux -lsemanage

@@ -1,10 +1,10 @@
 # Installation directories.
-PREFIX ?= /usr
-INCLUDEDIR ?= $(PREFIX)/include
-SBINDIR ?= $(PREFIX)/sbin
-MANDIR = $(PREFIX)/share/man
-LIBDIR ?= $(PREFIX)/lib
-BASHCOMPLETIONDIR ?= /usr/share/bash-completion/completions
+PREFIX ?= /
+INCLUDEDIR ?= $(PREFIX)/usr/include
+SBINDIR ?= $(PREFIX)/usr/sbin
+MANDIR = $(PREFIX)/usr/share/man
+LIBDIR ?= $(PREFIX)/usr/lib
+BASHCOMPLETIONDIR ?= $(PREFIX)/usr/share/bash-completion/completions
 
 CFLAGS ?= -Werror -Wall -W
 override LDLIBS += -lsepol -lselinux -lsemanage

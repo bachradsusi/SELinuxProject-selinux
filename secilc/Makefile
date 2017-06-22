@@ -1,8 +1,8 @@
-PREFIX ?= /usr
-BINDIR ?= $(PREFIX)/bin
-MANDIR ?= $(PREFIX)/share/man
-LIBDIR ?= $(PREFIX)/lib
-INCLUDEDIR ?= $(PREFIX)/include
+PREFIX ?= /
+BINDIR ?= $(PREFIX)/usr/bin
+MANDIR ?= $(PREFIX)/usr/share/man
+LIBDIR ?= $(PREFIX)/usr/lib
+INCLUDEDIR ?= $(PREFIX)/usr/include
 
 SECILC = secilc
 SECILC_SRCS := secilc.c

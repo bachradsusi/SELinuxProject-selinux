@@ -1,5 +1,5 @@
-PREFIX ?= /usr
-LIBDIR ?= $(PREFIX)/lib
+PREFIX ?= /
+LIBDIR ?= $(PREFIX)/usr/lib
 
 # Add your test source files here:
 SOURCES = $(sort $(wildcard *.c))

@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= /usr
-SBINDIR ?= $(PREFIX)/sbin
-MANDIR = $(PREFIX)/share/man
-ETCDIR ?= /etc
-LIBDIR ?= $(PREFIX)/lib
+PREFIX ?= /
+SBINDIR ?= $(PREFIX)/usr/sbin
+MANDIR = $(PREFIX)/usr/share/man
+ETCDIR ?= $(PREFIX)/etc
+LIBDIR ?= $(PREFIX)/usr/lib
 
 CFLAGS ?= -Werror -Wall -W
 override CFLAGS += -D_FILE_OFFSET_BITS=64

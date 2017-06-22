@@ -1,13 +1,13 @@
 PYTHON ?= python
 
 # Installation directories.
-PREFIX ?= /usr
-LIBDIR ?= $(PREFIX)/lib
-SBINDIR ?= $(PREFIX)/sbin
-MANDIR = $(PREFIX)/share/man
+PREFIX ?= /
+LIBDIR ?= $(PREFIX)/usr/lib
+SBINDIR ?= $(PREFIX)/usr/sbin
+MANDIR = $(PREFIX)/usr/share/man
 PYLIBVER ?= $(shell $(PYTHON) -c 'import sys;print("python%d.%d" % sys.version_info[0:2])')
 PYTHONLIBDIR ?= $(LIBDIR)/$(PYLIBVER)
-BASHCOMPLETIONDIR ?= /usr/share/bash-completion/completions
+BASHCOMPLETIONDIR ?= $(PREFIX)/usr/share/bash-completion/completions
 
 TARGETS=semanage
 

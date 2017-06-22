@@ -1,11 +1,11 @@
 #
 # Makefile for building the checkpolicy program
 #
-PREFIX ?= /usr
-BINDIR ?= $(PREFIX)/bin
-MANDIR ?= $(PREFIX)/share/man
-LIBDIR ?= $(PREFIX)/lib
-INCLUDEDIR ?= $(PREFIX)/include
+PREFIX ?= /
+BINDIR ?= $(PREFIX)/usr/bin
+MANDIR ?= $(PREFIX)/usr/share/man
+LIBDIR ?= $(PREFIX)/usr/lib
+INCLUDEDIR ?= $(PREFIX)/usr/include
 LIBSEPOLA ?= $(LIBDIR)/libsepol.a
 TARGETS = checkpolicy checkmodule
 
@@ -26,9 +26,9 @@ GENERATED=lex.yy.c y.tab.c y.tab.h
 all:  $(TARGETS)
 	$(MAKE) -C test
 
-checkpolicy: $(CHECKPOLOBJS) $(DESTDIR)$(LIBSEPOLA)
+checkpolicy: $(CHECKPOLOBJS) $(LIBSEPOLA)
 
-checkmodule: $(CHECKMODOBJS) $(DESTDIR)$(LIBSEPOLA)
+checkmodule: $(CHECKMODOBJS) $(LIBSEPOLA)
 
 %.o: %.c 
 	$(CC) $(CFLAGS) -o $@ -c $<

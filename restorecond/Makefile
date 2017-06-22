@@ -1,17 +1,17 @@
 PKG_CONFIG ?= pkg-config
 
 # Installation directories.
-PREFIX ?= /usr
-SBINDIR ?= $(PREFIX)/sbin
-LIBDIR ?= $(PREFIX)/lib
-MANDIR = $(PREFIX)/share/man
-AUTOSTARTDIR = /etc/xdg/autostart
-DBUSSERVICEDIR = /usr/share/dbus-1/services
-SYSTEMDDIR ?= /usr/lib/systemd
+PREFIX ?= /
+SBINDIR ?= $(PREFIX)/usr/sbin
+LIBDIR ?= $(PREFIX)/usr/lib
+MANDIR = $(PREFIX)/usr/share/man
+AUTOSTARTDIR = $(PREFIX)/etc/xdg/autostart
+DBUSSERVICEDIR = $(PREFIX)/usr/share/dbus-1/services
+SYSTEMDDIR ?= $(PREFIX)/usr/lib/systemd
 
 autostart_DATA = sealertauto.desktop
-INITDIR ?= /etc/rc.d/init.d
-SELINUXDIR = /etc/selinux
+INITDIR ?= $(PREFIX)/etc/rc.d/init.d
+SELINUXDIR = $(PREFIX)/etc/selinux
 
 DBUSFLAGS = -DHAVE_DBUS $(shell $(PKG_CONFIG) --cflags dbus-glib-1)
 DBUSLIB = $(shell $(PKG_CONFIG) --libs dbus-glib-1)

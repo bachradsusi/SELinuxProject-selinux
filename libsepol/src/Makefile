@@ -1,7 +1,7 @@
 # Installation directories.
-PREFIX ?= /usr
-INCLUDEDIR ?= $(PREFIX)/include
-LIBDIR ?= $(PREFIX)/lib
+PREFIX ?= /
+INCLUDEDIR ?= $(PREFIX)/usr/include
+LIBDIR ?= $(PREFIX)/usr/lib
 SHLIBDIR ?= $(PREFIX)/lib
 RANLIB ?= ranlib
 LIBBASE ?= $(shell basename $(LIBDIR))
@@ -52,7 +52,7 @@ $(LIBSO): $(LOBJS) $(LIBMAP)
 	ln -sf $@ $(TARGET) 
 
 $(LIBPC): $(LIBPC).in ../VERSION
-	sed -e 's/@VERSION@/$(VERSION)/; s:@prefix@:$(PREFIX):; s:@libdir@:$(LIBBASE):; s:@includedir@:$(INCLUDEDIR):' < $< > $@
+	sed -e 's/@VERSION@/$(VERSION)/; s:@prefix@:$(PREFIX)/usr:; s:@libdir@:$(LIBBASE):; s:@includedir@:$(INCLUDEDIR):' < $< > $@
 
 $(LIBMAP): $(LIBMAP).in
 ifneq ($(DISABLE_CIL),y)

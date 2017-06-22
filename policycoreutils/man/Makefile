@@ -1,5 +1,6 @@
 # Installation directories.
-MAN5DIR ?= /usr/share/man/man5
+PREFIX ?= /
+MAN5DIR ?= $(PREFIX)/usr/share/man/man5
 
 all:
 

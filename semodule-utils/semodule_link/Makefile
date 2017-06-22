@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= /usr
-INCLUDEDIR ?= /include
-BINDIR ?= $(PREFIX)/bin
-MANDIR ?= $(PREFIX)/share/man
-LIBDIR ?= $(PREFIX)/lib
+PREFIX ?= /
+INCLUDEDIR ?= $(PREFIX)/usr/include
+BINDIR ?= $(PREFIX)/usr/bin
+MANDIR ?= $(PREFIX)/usr/share/man
+LIBDIR ?= $(PREFIX)/usr/lib
 
 CFLAGS ?= -Werror -Wall -W
 override LDLIBS += -lsepol
@@ -15,7 +15,7 @@ semodule_link:  semodule_link.o
 install: all
 	-mkdir -p $(DESTDIR)$(BINDIR)
 	install -m 755 semodule_link $(DESTDIR)$(BINDIR)
-	test -d $(DESTDIR)$(MANDIR)/man8 || install -m 755 -d $(PREFIX)$(MANDIR)/man8
+	test -d $(DESTDIR)$(MANDIR)/man8 || install -m 755 -d $(DESTDIR)/$(MANDIR)/man8
 	install -m 644 semodule_link.8 $(DESTDIR)$(MANDIR)/man8/
 
 relabel:

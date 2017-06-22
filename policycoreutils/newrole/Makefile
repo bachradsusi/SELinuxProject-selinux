@@ -1,9 +1,9 @@
 # Installation directories.
-PREFIX ?= /usr
-BINDIR ?= $(PREFIX)/bin
-MANDIR ?= $(PREFIX)/share/man
-ETCDIR ?= /etc
-LOCALEDIR = /usr/share/locale
+PREFIX ?= /
+BINDIR ?= $(PREFIX)/usr/bin
+MANDIR ?= $(PREFIX)/usr/share/man
+ETCDIR ?= $(PREFIX)/etc
+LOCALEDIR = $(PREFIX)/usr/share/locale
 PAMH ?= $(shell test -f /usr/include/security/pam_appl.h && echo y)
 AUDITH ?= $(shell test -f /usr/include/libaudit.h && echo y)
 # Enable capabilities to permit newrole to generate audit records.

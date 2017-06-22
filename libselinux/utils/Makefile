@@ -1,8 +1,8 @@
 # Installation directories.
-PREFIX ?= /usr
-LIBDIR ?= $(PREFIX)/lib
-SBINDIR ?= $(PREFIX)/sbin
-INCLUDEDIR ?= $(PREFIX)/include
+PREFIX ?= /
+LIBDIR ?= $(PREFIX)/usr/lib
+SBINDIR ?= $(PREFIX)/usr/sbin
+INCLUDEDIR ?= $(PREFIX)/usr/include
 
 OS ?= $(shell uname)
 

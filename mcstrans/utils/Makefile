@@ -1,7 +1,7 @@
 # Installation directories.
-PREFIX ?= /usr
-LIBDIR ?= $(PREFIX)/lib
-SBINDIR ?= $(PREFIX)/sbin
+PREFIX ?= /
+LIBDIR ?= $(PREFIX)/usr/lib
+SBINDIR ?= $(PREFIX)/usr/sbin
 LIBSEPOLA ?= $(LIBDIR)/libsepol.a
 
 CFLAGS ?= -Wall

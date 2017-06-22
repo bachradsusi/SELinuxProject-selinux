@@ -1,7 +1,7 @@
 # Installation directories.
-PREFIX ?= /usr
-SBINDIR ?= /sbin
-MANDIR ?= $(PREFIX)/share/man
+PREFIX ?= /
+SBINDIR ?= $(PREFIX)/sbin
+MANDIR ?= $(PREFIX)/usr/share/man
 LOCALEDIR ?= /usr/share/locale
 
 CFLAGS ?= -Werror -Wall -W

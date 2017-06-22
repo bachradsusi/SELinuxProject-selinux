@@ -1,5 +1,6 @@
 # Installation directories.
-MAN8DIR ?= /usr/share/man/man8
+PREFIX ?= /
+MAN8DIR ?= $(PREFIX)/usr/share/man/man8
 
 all:
 

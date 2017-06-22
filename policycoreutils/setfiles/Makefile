@@ -1,8 +1,8 @@
 # Installation directories.
-PREFIX ?= /usr
-SBINDIR ?= /sbin
-MANDIR = $(PREFIX)/share/man
-LIBDIR ?= $(PREFIX)/lib
+PREFIX ?= /
+SBINDIR ?= $(PREFIX)/sbin
+MANDIR = $(PREFIX)/usr/share/man
+LIBDIR ?= $(PREFIX)/usr/lib
 AUDITH ?= $(shell test -f /usr/include/libaudit.h && echo y)
 
 ABORT_ON_ERRORS=$(shell grep "^\#define ABORT_ON_ERRORS" setfiles.c | awk -S '{ print $$3 }')

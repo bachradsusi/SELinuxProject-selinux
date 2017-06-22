@@ -1,5 +1,6 @@
+PREFIX ?= /
 PYTHON ?= python
-PYTHONLIBDIR ?= $(shell $(PYTHON) -c "from distutils.sysconfig import *; print(get_python_lib(1))")
+PYTHONLIBDIR ?= $(PREFIX)$(shell $(PYTHON) -c "from distutils.sysconfig import *; print(get_python_lib(1))")
 PACKAGEDIR ?= $(PYTHONLIBDIR)/sepolgen
 
 all:
