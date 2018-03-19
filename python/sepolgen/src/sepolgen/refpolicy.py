@@ -109,6 +109,9 @@ class Node(PolicyBase):
     def avrules(self):
         return filter(lambda x: isinstance(x, AVRule), walktree(self))
 
+    def avextrules(self):
+        return filter(lambda x: isinstance(x, AVExtRule), walktree(self))
+
     def typerules(self):
         return filter(lambda x: isinstance(x, TypeRule), walktree(self))
 
@@ -347,6 +350,77 @@ class ObjectClass(Leaf):
         self.name = name
         self.perms = IdSet()
 
+class XpermSet():
+    """Extended permission set.
+
+    This class represents one or more extended permissions
+    represented by numeric values or ranges of values. The
+    .complement attribute is used to specify all permission
+    except those specified.
+
+    Two xperm set can be merged using the .extend() method.
+    """
+    def __init__(self, complement=False):
+        self.complement = complement
+        self.ranges = []
+
+    def __normalize_ranges(self):
+        """Ensure that ranges are not overlapping.
+        """
+        self.ranges.sort()
+
+        i = 0
+        while i < len(self.ranges):
+            while i + 1 < len(self.ranges):
+                if self.ranges[i + 1][0] <= self.ranges[i][1] + 1:
+                    self.ranges[i] = (self.ranges[i][0], max(self.ranges[i][1],
+                                                             self.ranges[i + 1][1]))
+                    del self.ranges[i + 1]
+                else:
+                    break
+            i += 1
+
+    def extend(self, s):
+        """Add ranges from an xperm set
+        """
+        self.ranges.extend(s.ranges)
+        self.__normalize_ranges()
+
+    def add(self, minimum, maximum=None):
+        """Add value of range of values to the xperm set.
+        """
+        if maximum is None:
+            maximum = minimum
+        self.ranges.append((minimum, maximum))
+        self.__normalize_ranges()
+
+    def to_single_value(self):
+        """Return single value - it is used by refparser.
+        """
+        return self.ranges[0][0]
+
+    def to_string(self):
+        if self.complement:
+            s = "~ "
+        else:
+            s = ""
+
+        if len(self.ranges) > 1 or self.ranges[0][0] != self.ranges[0][1]:
+            s += "{ "
+
+        for r in self.ranges:
+            if r[0] == r[1]:
+                s += "%d " % r[0]
+            else:
+                s += "%d-%d " % r
+
+        if len(self.ranges) > 1 or self.ranges[0][0] != self.ranges[0][1]:
+            s += "}"
+        else:
+            s = s[:-1]
+
+        return s
+
 # Basic statements
 
 class TypeAttribute(Leaf):
@@ -467,8 +541,10 @@ class AVRule(Leaf):
             return "allow"
         elif self.rule_type == self.DONTAUDIT:
             return "dontaudit"
-        else:
+        elif self.rule_type == self.AUDITALLOW:
             return "auditallow"
+        else:
+            return "neverallow"
 
     def from_av(self, av):
         """Add the access from an access vector to this allow
@@ -492,6 +568,65 @@ class AVRule(Leaf):
                                      self.tgt_types.to_space_str(),
                                      self.obj_classes.to_space_str(),
                                      self.perms.to_space_str())
+
+class AVExtRule(Leaf):
+    """Extended permission access vector rule.
+
+    The AVExtRule class represents allowxperm, dontauditxperm,
+    auditallowxperm, and neverallowxperm rules.
+
+    The source and target types, and object classes are represented
+    by sets containing strings. The operation is a single string,
+    e.g. 'ioctl'. Extended permissions are represented by an XpermSet.
+    """
+    ALLOWXPERM = 0
+    DONTAUDITXPERM = 1
+    AUDITALLOWXPERM = 2
+    NEVERALLOWXPERM = 3
+
+    def __init__(self, av=None, op=None, parent=None):
+        Leaf.__init__(self, parent)
+        self.src_types = IdSet()
+        self.tgt_types = IdSet()
+        self.obj_classes = IdSet()
+        self.rule_type = self.ALLOWXPERM
+        self.xperms = XpermSet()
+        self.operation = None
+        if av:
+            self.from_av(av, op)
+
+    def __rule_type_str(self):
+        if self.rule_type == self.ALLOWXPERM:
+            return "allowxperm"
+        elif self.rule_type == self.DONTAUDITXPERM:
+            return "dontauditxperm"
+        elif self.rule_type == self.AUDITALLOWXPERM:
+            return "auditallowxperm"
+        else:
+            return "neverallowxperm"
+
+    def from_av(self, av, op):
+        self.src_types.add(av.src_type)
+        if av.src_type == av.tgt_type:
+            self.tgt_types.add("self")
+        else:
+            self.tgt_types.add(av.tgt_type)
+        self.obj_classes.add(av.obj_class)
+        self.operation = op
+        self.xperms = av.xperms[op]
+
+    def to_string(self):
+        """Return a string representation of the rule that is
+        a valid policy language representation (assuming that
+        the types, object class, etc. are valie).
+        """
+        return "%s %s %s:%s %s %s;" % (self.__rule_type_str(),
+                                     self.src_types.to_space_str(),
+                                     self.tgt_types.to_space_str(),
+                                     self.obj_classes.to_space_str(),
+                                     self.operation,
+                                     self.xperms.to_string())
+
 class TypeRule(Leaf):
     """SELinux type rules.
 

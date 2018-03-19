@@ -61,6 +61,10 @@ class TestAccessVector(unittest.TestCase):
         self.assertEqual(a.obj_class, l.obj_class)
         self.assertEqual(a.perms, l.perms)
 
+        l2 = access.AccessVector()
+        with self.assertRaises(ValueError):
+            l2.from_list(['foo', 'bar', 'file'])
+
     def test_to_list(self):
         a = access.AccessVector()
         a.src_type = "foo"
@@ -145,6 +149,20 @@ class TestAccessVector(unittest.TestCase):
 
         b.perms = refpolicy.IdSet(["read", "append"])
         self.assertNotEqual(a, b)
+
+    def test_merge(self):
+        a = access.AccessVector(["foo", "bar", "file", "read", "write"])
+
+        b = access.AccessVector(["foo", "bar", "file", "append"])
+        xp = refpolicy.XpermSet()
+        xp.add(42)
+        xp.add(12345)
+        b.xperms = {"ioctl": xp}
+
+        a.merge(b)
+        self.assertEqual(list(a.perms), ["read", "write", "append"])
+        self.assertEqual(a.xperms.keys(), ["ioctl"])
+        self.assertEqual(a.xperms["ioctl"].to_string(), "{ 42 12345 }")
                          
 class TestUtilFunctions(unittest.TestCase):
     def test_is_idparam(self):
@@ -260,3 +278,11 @@ class TestAccessVectorSet(unittest.TestCase):
         b = access.AccessVectorSet()
         b.from_list(avl)
         self.assertEqual(len(b), 3)
+
+    def test_add(self):
+        s = access.AccessVectorSet()
+        s.add("foo", "bar", "file", refpolicy.IdSet(["read"]), audit_msg=1)
+        s.add("foo", "bar", "file", refpolicy.IdSet(["write"]), audit_msg=2)
+        
+        self.assertEqual(s.to_list(), [['foo', 'bar', 'file', 'read', 'write']])
+
