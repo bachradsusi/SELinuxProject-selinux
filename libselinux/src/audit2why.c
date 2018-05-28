@@ -207,7 +207,7 @@ static int __policy_init(const char *init_path)
 				 "unable to open %s:  %s\n",
 				 path, strerror(errno));
 			PyErr_SetString( PyExc_ValueError, errormsg);
-			return 1;
+			SWIG_fail;
 		}
 	} else {
 		const char *curpolicy = selinux_current_policy_path();
@@ -216,7 +216,7 @@ static int __policy_init(const char *init_path)
 			snprintf(errormsg, sizeof(errormsg),
 				 "You must specify the -p option with the path to the policy file.\n");
 			PyErr_SetString( PyExc_ValueError, errormsg);
-			return 1;
+			SWIG_fail;
 		}
 		fp = fopen(curpolicy, "re");
 		if (!fp) {
@@ -225,7 +225,7 @@ static int __policy_init(const char *init_path)
 				 curpolicy,
 				 strerror(errno));
 			PyErr_SetString( PyExc_ValueError, errormsg);
-			return 1;
+			SWIG_fail;
 		}
 	}
 
@@ -233,7 +233,7 @@ static int __policy_init(const char *init_path)
 	if (!avc) {
 		PyErr_SetString( PyExc_MemoryError, "Out of memory\n");
 		fclose(fp);
-		return 1;
+		SWIG_fail;
 	}
 
 	/* Set up a policydb directly so that we can mutate it later
@@ -245,7 +245,7 @@ static int __policy_init(const char *init_path)
 			 "policydb_init failed: %s\n", strerror(errno));
 		PyErr_SetString( PyExc_RuntimeError, errormsg);
 		fclose(fp);
-		return 1;
+		SWIG_fail;
 	}
 	sepol_policy_file_set_fp(pf, fp);	
 	if (sepol_policydb_read(avc->policydb, pf)) {
@@ -253,7 +253,7 @@ static int __policy_init(const char *init_path)
 			 "invalid binary policy %s\n", path);
 		PyErr_SetString( PyExc_ValueError, errormsg);
 		fclose(fp);
-		return 1;
+		SWIG_fail;
 	}
 	fclose(fp);
 	sepol_set_policydb(&avc->policydb->p);
@@ -265,13 +265,13 @@ static int __policy_init(const char *init_path)
 			      avc->policydb, &cnt);
 	if (rc < 0) {
 		PyErr_SetString( PyExc_RuntimeError, "unable to get bool count\n");
-		return 1;
+		SWIG_fail;
 	}
 
 	boollist = calloc(cnt, sizeof(*boollist));
 	if (!boollist) {
 		PyErr_SetString( PyExc_MemoryError, "Out of memory\n");
-		return 1;
+		SWIG_fail;
 	}
 
 	sepol_bool_iterate(avc->handle, avc->policydb,
@@ -283,7 +283,7 @@ static int __policy_init(const char *init_path)
 	if (rc < 0) {
 		PyErr_SetString( PyExc_RuntimeError, "unable to init sidtab\n");
 		free(boollist);
-		return 1;
+		SWIG_fail;
 	}
 	sepol_set_sidtab(&sidtab);
 	return 0;
