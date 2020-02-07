@@ -115,14 +115,27 @@ int get_default_context(const char *user,
 	return 0;
 }
 
-static int is_in_reachable(const char **reachable, const char *usercon_str)
-{
-	const char **reachable_p;
+struct context_list {
+	char *context;
+	struct context_list *next;
+};
 
-	for (reachable_p = reachable; *reachable_p != NULL; reachable_p++) {
-		if (strcmp(*reachable_p, usercon_str) == 0) {
+static void context_list_destroy(struct context_list *list)
+{
+	struct context_list *next;
+	do {
+		next = list->next;
+		free(list);
+		list = next;
+	} while (list);
+}
+
+static int is_in_reachable(struct context_list *reachable, const char *usercon_str)
+{
+	while (reachable) {
+		if (strcmp(reachable->context, usercon_str) == 0)
 			return 1;
-		}
+		reachable = reachable->next;
 	}
 	return 0;
 }
@@ -130,7 +143,7 @@ static int is_in_reachable(const char **reachable, const char *usercon_str)
 static int get_context_user(FILE * fp,
 			     char * fromcon,
 			     const char * user,
-			     char ***reachable,
+			     struct context_list **reachable,
 			     unsigned int *nreachable)
 {
 	char *start, *end = NULL;
@@ -141,7 +154,7 @@ static int get_context_user(FILE * fp,
 	int found = 0;
 	const char *fromrole, *fromtype, *fromlevel;
 	char *linerole, *linetype;
-	char **new_reachable = NULL;
+	struct context_list *new_reachable = NULL;
 	char *usercon_str;
 	context_t con;
 	context_t usercon;
@@ -272,32 +285,18 @@ static int get_context_user(FILE * fp,
 		}
 
 		/* check whether usercon is already in reachable */
-		if (*nreachable > 0 && is_in_reachable((const char **)*reachable, usercon_str)) {
+		if (is_in_reachable(*reachable, usercon_str)) {
 			start = end;
 			continue;
 		}
 		if (security_check_context(usercon_str) == 0) {
-			if (*nreachable == 0) {
-				new_reachable = malloc(2 * sizeof(char *));
-				if (!new_reachable) {
-					context_free(usercon);
-					rc = -1;
-					goto out;
-				}
-			} else {
-				new_reachable = realloc(*reachable, (*nreachable + 2) * sizeof(char *));
-				if (!new_reachable) {
-					context_free(usercon);
-					rc = -1;
-					goto out;
-				}
-			}
-			new_reachable[*nreachable] = strdup(usercon_str);
-			if (new_reachable[*nreachable] == NULL) {
+			new_reachable = malloc(sizeof(*new_reachable));
+			new_reachable->context = strdup(usercon_str);
+			if (new_reachable->context == NULL) {
 				rc = -1;
 				goto out;
 			}
-			new_reachable[*nreachable + 1] = 0;
+			new_reachable->next = *reachable;
 			*reachable = new_reachable;
 			*nreachable += 1;
 		}
@@ -423,9 +422,10 @@ int get_ordered_context_list(const char *user,
 			     char * fromcon,
 			     char *** list)
 {
-	char **reachable = NULL;
+	struct context_list *tmp, *reachable = NULL;
+	char **res;
 	int rc = 0;
-	unsigned nreachable = 0, freefrom = 0;
+	unsigned i, nreachable = 0, freefrom = 0;
 	FILE *fp;
 	char *fname = NULL;
 	size_t fname_len;
@@ -477,11 +477,24 @@ int get_ordered_context_list(const char *user,
 	if (!nreachable)
 		goto failsafe;
 
+	res = malloc(nreachable * sizeof(char *));
+	if (!res) {
+		rc = -1;
+		context_list_destroy(reachable);
+		goto out;
+	}
+
+	tmp = reachable;
+	for (i = 0; i < nreachable; i++) {
+		res[i] = tmp->context;
+		tmp = tmp->next;
+	}
+	context_list_destroy(reachable);
       out:
 	if (rc > 0)
-		*list = reachable;
+		*list = res;
 	else
-		freeconary(reachable);
+		freeconary(res);
 
 	if (freefrom)
 		freecon(fromcon);
@@ -492,20 +505,16 @@ int get_ordered_context_list(const char *user,
 	/* Unable to determine a reachable context list, try to fall back to
 	   the "failsafe" context to at least permit root login
 	   for emergency recovery if possible. */
-	freeconary(reachable);
-	reachable = malloc(2 * sizeof(char *));
-	if (!reachable) {
+	context_list_destroy(reachable);
+	res = malloc(2 * sizeof(char *));
+	if (!res) {
 		rc = -1;
 		goto out;
 	}
-	reachable[0] = reachable[1] = 0;
-	rc = get_failsafe_context(user, &reachable[0]);
-	if (rc < 0) {
-		freeconary(reachable);
-		reachable = NULL;
-		goto out;
-	}
-	rc = 1;			/* one context in the list */
+	res[0] = res[1] = NULL;
+	rc = get_failsafe_context(user, &res[0]);
+	if (rc >= 0)
+		rc = 1;		/* one context in the list */
 	goto out;
 }
 
