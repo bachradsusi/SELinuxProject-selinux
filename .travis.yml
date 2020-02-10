@@ -11,22 +11,23 @@ compiler:
 env:
   matrix:
     # Test the last version of Python and Ruby together, with some linkers
-    - PYVER=python3.7 RUBYLIBVER=2.6
-    - PYVER=python3.7 RUBYLIBVER=2.6 TEST_FLAGS_OVERRIDE=1
-    - PYVER=python3.7 RUBYLIBVER=2.6 TEST_DEBUG=1
-    - PYVER=python3.7 RUBYLIBVER=2.6 LINKER=gold
-    - PYVER=python3.7 RUBYLIBVER=2.6 LINKER=bfd
+    - PYVER=python3.8 RUBYLIBVER=2.6
+    - PYVER=python3.8 RUBYLIBVER=2.6 TEST_FLAGS_OVERRIDE=1
+    - PYVER=python3.8 RUBYLIBVER=2.6 TEST_DEBUG=1
+    - PYVER=python3.8 RUBYLIBVER=2.6 LINKER=gold
+    - PYVER=python3.8 RUBYLIBVER=2.6 LINKER=bfd
 
     # Test several Python versions
     - PYVER=python3.5 RUBYLIBVER=2.6
     - PYVER=python3.6 RUBYLIBVER=2.6
+    - PYVER=python3.7 RUBYLIBVER=2.6
     - PYVER=pypy3.5-6.0 RUBYLIBVER=2.6
 
     # Test several Ruby versions (http://rubies.travis-ci.org/)
-    - PYVER=python3.7 RUBYLIBVER=2.5.1
-    - PYVER=python3.7 RUBYLIBVER=2.4
-    - PYVER=python3.7 RUBYLIBVER=2.3
-    - PYVER=python3.7 RUBYLIBVER=2.2
+    - PYVER=python3.8 RUBYLIBVER=2.5.1
+    - PYVER=python3.8 RUBYLIBVER=2.4
+    - PYVER=python3.8 RUBYLIBVER=2.3
+    - PYVER=python3.8 RUBYLIBVER=2.2
 
 matrix:
   exclude:
