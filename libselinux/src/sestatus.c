@@ -298,11 +298,10 @@ int selinux_status_open(int fallback)
 		goto error;
 
 	selinux_status = mmap(NULL, pagesize, PROT_READ, MAP_SHARED, fd, 0);
+	close(fd);
 	if (selinux_status == MAP_FAILED) {
-		close(fd);
 		goto error;
 	}
-	selinux_status_fd = fd;
 	last_seqno = (uint32_t)(-1);
 
 	/* sequence must not be changed during references */
@@ -379,6 +378,7 @@ void selinux_status_close(void)
 		avc_netlink_release_fd();
 		avc_netlink_close();
 		selinux_status = NULL;
+		close(selinux_status_fd);
 		return;
 	}
 
@@ -388,7 +388,5 @@ void selinux_status_close(void)
 		munmap(selinux_status, pagesize);
 	selinux_status = NULL;
 
-	close(selinux_status_fd);
-	selinux_status_fd = -1;
 	last_seqno = (uint32_t)(-1);
 }
