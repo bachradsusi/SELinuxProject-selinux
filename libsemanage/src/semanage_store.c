@@ -1764,6 +1764,21 @@ static int semanage_commit_sandbox(semanage_handle_t * sh)
 	/* clean up some files from the sandbox before install */
 	/* remove homedir_template from sandbox */
 
+	/* sync sandbox to filesystem first */
+    fd = open(sandbox, O_DIRECTORY);
+	if (fd == -1) {
+		ERR(sh, "Error while opening %s for syncfs(): %d", sandbox, errno);
+		retval = -1;
+		goto cleanup;
+	}
+	if (syncfs(fd) == -1) {
+		ERR(sh, "Error while syncing %s to filesystem: %d", sandbox, errno);
+		retval = -1;
+		goto cleanup;
+	}
+    close(fd);
+	INFO(sh, "Synced %s", sandbox);
+
 	if (rename(sandbox, active) == -1) {
 		ERR(sh, "Error while renaming %s to %s.", sandbox, active);
 		/* note that if an error occurs during the next
