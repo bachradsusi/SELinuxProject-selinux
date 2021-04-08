@@ -26,7 +26,7 @@
 #include <selinux/context.h>
 #include <syslog.h>
 #include <errno.h>
-#include <pcre.h>
+#include <pcre2.h>
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
@@ -82,9 +82,9 @@ typedef struct word_group {
 	affix_t *suffixes;
 	word_t *words;
 
-	pcre *prefix_regexp;
-	pcre *word_regexp;
-	pcre *suffix_regexp;
+	pcre2_code *prefix_regexp;
+	pcre2_code *word_regexp;
+	pcre2_code *suffix_regexp;
 
 	ebitmap_t def;
 
@@ -109,7 +109,7 @@ typedef struct domain {
 	base_classification_t *base_classifications;
 	word_group_t *groups;
 
-	pcre *base_classification_regexp;
+	pcre2_code *base_classification_regexp;
 	struct domain *next;
 } domain_t;
 
@@ -317,9 +317,9 @@ destroy_group(word_group_t **list, word_group_t *group) {
 	free(group->name);
 	free(group->sword);
 	free(group->join);
-	pcre_free(group->prefix_regexp);
-	pcre_free(group->word_regexp);
-	pcre_free(group->suffix_regexp);
+	pcre2_code_free(group->prefix_regexp);
+	pcre2_code_free(group->word_regexp);
+	pcre2_code_free(group->suffix_regexp);
 	ebitmap_destroy(&group->def);
 	free(group);
 }
@@ -392,7 +392,7 @@ destroy_domain(domain_t *domain) {
 		free(domain->base_classifications);
 		domain->base_classifications = next;
 	}
-	pcre_free(domain->base_classification_regexp);
+	pcre2_code_free(domain->base_classification_regexp);
 	while (domain->groups)
 		destroy_group(&domain->groups, domain->groups);
 	free(domain->name);
@@ -517,7 +517,7 @@ add_constraint(char op, char *raw, char *tok) {
 	} else {
 		return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -970,14 +970,14 @@ word_size(const void *p1, const void *p2) {
 }
 
 void
-build_regexp(pcre **r, char *buffer) {
-	const char *error;
-	int error_offset;
+build_regexp(pcre2_code **r, char *buffer) {
+	int errorcode;
+	PCRE2_SIZE error_offset;
 	if (*r)
-		pcre_free(*r);
-	*r = pcre_compile(buffer, PCRE_CASELESS, &error, &error_offset, NULL);
-	if (error) {
-		log_error("pcre=%s, error=%s\n", buffer, error ? error: "none");
+		pcre2_code_free(*r);
+	*r = pcre2_compile((PCRE2_SPTR)buffer, PCRE2_ZERO_TERMINATED, PCRE2_CASELESS, &errorcode, &error_offset, NULL);
+	if (errorcode) {
+		log_error("pcre=%s, error=%d\n", buffer, errorcode);
 	}
 	buffer[0] = '\0';
 }
@@ -1099,10 +1099,12 @@ compute_raw_from_trans(const char *level, domain_t *domain) {
 	word_group_t *g = NULL;
 	char *work = NULL;
 	char *r = NULL;
-	const char * match = NULL;
+	char * match = NULL;
 	int work_len;
 	mls_level_t *mraw = NULL;
 	ebitmap_t set, clear, tmp;
+	pcre2_match_data *match_data;
+	PCRE2_SIZE match_len;
 
 	ebitmap_init(&set);
 	ebitmap_init(&clear);
@@ -1121,10 +1123,18 @@ compute_raw_from_trans(const char *level, domain_t *domain) {
 	if (!domain->base_classification_regexp)
 		goto err;
 	log_debug(" compute_raw_from_trans work = %s\n", work);
-	rc = pcre_exec(domain->base_classification_regexp, 0, work, work_len, 0, PCRE_ANCHORED, ovector, OVECCOUNT);
+	/* rc = pcre_exec(domain->base_classification_regexp, 0, work, work_len, 0, PCRE_ANCHORED, ovector, OVECCOUNT); */
+    match_data =
+	    pcre2_match_data_create_from_pattern(domain->base_classification_regexp, NULL);
+	if (!match_data) {
+		goto err;
+	}
+
+	rc = pcre2_match(domain->base_classification_regexp, (PCRE2_SPTR)work, work_len, 0, PCRE2_ANCHORED, match_data, NULL);
+
 	if (rc > 0) {
 		match = NULL;
-		pcre_get_substring(work, ovector, rc, 0, &match);
+		pcre2_substring_get_bynumber(match_data, 0, (PCRE2_UCHAR **)&match, &match_len);
 		log_debug(" compute_raw_from_trans match = %s len = %u\n", match, strlen(match));
 		base_classification_t *bc;
 		for (bc = domain->base_classifications; bc; bc = bc->next) {
@@ -1145,7 +1155,8 @@ compute_raw_from_trans(const char *level, domain_t *domain) {
 		char *p=work + ovector[0] + ovector[1];
 		while (*p && (strchr(" 	", *p) != NULL))
 			*p++ = '#';
-		pcre_free((char *)match);
+		pcre2_substring_free((PCRE2_UCHAR *)match);
+		pcre2_match_data_free(match_data);
 		match = NULL;
 	} else {
 		log_debug(" compute_raw_from_trans no base classification matched %s\n", level);
@@ -1164,7 +1175,12 @@ compute_raw_from_trans(const char *level, domain_t *domain) {
 			int prefix_offset = 0, prefix_len = 0;
 			int suffix_offset = 0, suffix_len = 0;
 			if (g->prefix_regexp) {
-				rc = pcre_exec(g->prefix_regexp, 0, work, work_len, 0, 0, ovector, OVECCOUNT);
+				match_data = pcre2_match_data_create_from_pattern(g->prefix_regexp, NULL);
+				if (!match_data) {
+					goto err;
+				}
+				rc = pcre2_match(g->prefix_regexp, (PCRE2_SPTR)work, work_len, 0, PCRE2_ANCHORED, match_data, NULL);
+				/* rc = pcre_exec(g->prefix_regexp, 0, work, work_len, 0, 0, ovector, OVECCOUNT); */
 				if (rc > 0) {
 					prefix = 1;
 					prefix_offset = ovector[0];
@@ -1230,7 +1246,7 @@ compute_raw_from_trans(const char *level, domain_t *domain) {
 						memset(work + suffix_offset, '#', suffix_len);
 						memset(s + ovector[0], '#', ovector[1] - ovector[0]);
 					}
-					pcre_free((void *)match);
+					pcre2_code_free((void *)match);
 					match = NULL;
 				}
 			}
@@ -1271,7 +1287,7 @@ err:
 	mls_level_destroy(mraw);
 	free(mraw);
 	free(work);
-	pcre_free((void *)match);
+	pcre2_code_free((void *)match);
 	ebitmap_destroy(&tmp);
 	ebitmap_destroy(&set);
 	ebitmap_destroy(&clear);

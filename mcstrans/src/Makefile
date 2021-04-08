@@ -15,12 +15,12 @@ PROG_SRC=mcstrans.c  mcscolor.c  mcstransd.c  mls_level.c
 PROG_OBJS= $(patsubst %.c,%.o,$(PROG_SRC))
 PROG=mcstransd
 INITSCRIPT=mcstrans
-CFLAGS ?= -Wall -W -Wundef -Wmissing-noreturn -Wmissing-format-attribute
+CFLAGS ?= -Wall -W -Wundef -Wmissing-noreturn -Wmissing-format-attribute -DPCRE2_CODE_UNIT_WIDTH=8
 
 all: $(PROG)
 
 $(PROG): $(PROG_OBJS) $(LIBSEPOLA)
-	$(CC) $(LDFLAGS) -pie -o $@ $^ -lselinux -lcap -lpcre $(LDLIBS_LIBSEPOLA)
+	$(CC) $(LDFLAGS) -DPCRE2_CODE_UNIT_WIDTH=8 -pie -o $@ $^ -lselinux -lcap -lpcre2-8 $(LDLIBS_LIBSEPOLA)
 
 %.o:  %.c 
 	$(CC) $(CFLAGS) -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -fPIE -c -o $@ $<
