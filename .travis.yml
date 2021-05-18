@@ -6,7 +6,7 @@ sudo: required
 dist: bionic
 
 script:
-  - FEDORA_MAJOR=33 FEDORA_MINOR=1.2 scripts/ci/travis-kvm-setup.sh
+  - FEDORA_MAJOR=34 FEDORA_MINOR=1.2 scripts/ci/travis-kvm-setup.sh
 
 # Do not spam by email so long as the build succeeds
 notifications:
