@@ -37,8 +37,10 @@ typedef struct dbase_policydb dbase_t;
 #include "handle.h"
 
 #include <selinux/selinux.h>
+#include <selinux/label.h>
 #include <sepol/policydb.h>
 #include <sepol/module.h>
+#include <sepol/sepol.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -1479,8 +1481,14 @@ int semanage_reload_policy(semanage_handle_t * sh)
 	if (!sh)
 		return -1;
 
-	if ((r = semanage_exec_prog(sh, sh->conf->load_policy, "", "")) != 0) {
-		ERR(sh, "load_policy returned error code %d.", r);
+	if (sh->conf->load_policy->path == NULL) {
+		r = selinux_mkload_policy(0);
+	}
+	else {
+		r = semanage_exec_prog(sh, sh->conf->load_policy, "", "");
+	}
+	if (r != 0) {
+		ERR(sh, "reload policy failed with error code %d.", r);
 	}
 	return r;
 }
@@ -1576,33 +1584,67 @@ static int semanage_validate_and_compile_fcontexts(semanage_handle_t * sh)
 	int status = -1;
 
 	if (sh->do_check_contexts) {
-		int ret;
-		ret = semanage_exec_prog(
-			sh,
-			sh->conf->setfiles,
-			semanage_final_path(SEMANAGE_FINAL_TMP,
-					    SEMANAGE_KERNEL),
-			semanage_final_path(SEMANAGE_FINAL_TMP,
-					    SEMANAGE_FC));
-		if (ret != 0) {
-			ERR(sh, "setfiles returned error code %d.", ret);
-			goto cleanup;
+		if (sh->conf->setfiles->path != NULL) {
+			int ret;
+			ret = semanage_exec_prog(
+				sh,
+				sh->conf->setfiles,
+				semanage_final_path(SEMANAGE_FINAL_TMP,
+									SEMANAGE_KERNEL),
+				semanage_final_path(SEMANAGE_FINAL_TMP,
+									SEMANAGE_FC));
+			if (ret != 0) {
+				ERR(sh, "setfiles returned error code %d.", ret);
+				goto cleanup;
+			}
+		} else {
+			FILE *policystream = NULL;
+			struct selinux_opt selinux_opts[] = {
+				{ SELABEL_OPT_VALIDATE, "1" },
+	    		{ SELABEL_OPT_PATH, semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC) },
+		    };
+			struct selabel_handle *selabel;
+			policystream = fopen(semanage_final_path(SEMANAGE_FINAL_TMP,
+									SEMANAGE_KERNEL), "r");
+			if (!policystream) {
+				ERR(sh, "Error opening %s: %s\n",
+					semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_KERNEL),
+					strerror(errno));
+				goto cleanup;
+			}
+			if (sepol_set_policydb_from_file(policystream)
+				< 0) {
+				ERR(sh, "Error reading policy %s: %s\n",
+					semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_KERNEL),
+					strerror(errno));
+				goto cleanup;
+			}
+			fclose(policystream);
+
+			selabel = selabel_open(SELABEL_CTX_FILE, selinux_opts, 2);
+			if (!selabel) {
+				ERR(sh, "selabel_open returned error code %d  %s.", errno, semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC));
+				goto cleanup;
+			}
+			selabel_close(selabel);
 		}
 	}
 
-	if (sefcontext_compile(sh,
-		    semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC)) != 0) {
-		goto cleanup;
-	}
+	if (sh->conf->sefcontext_compile->path != NULL) {
+		if (sefcontext_compile(sh,
+			    semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC)) != 0) {
+			goto cleanup;
+		}
 
-	if (sefcontext_compile(sh,
-		    semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC_LOCAL)) != 0) {
-		goto cleanup;
-	}
+		if (sefcontext_compile(sh,
+			    semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC_LOCAL)) != 0) {
+			goto cleanup;
+		}
 
-	if (sefcontext_compile(sh,
-		    semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC_HOMEDIRS)) != 0) {
-		goto cleanup;
+		if (sefcontext_compile(sh,
+			    semanage_final_path(SEMANAGE_FINAL_TMP, SEMANAGE_FC_HOMEDIRS)) != 0) {
+			goto cleanup;
+		}
 	}
 
 	status = 0;

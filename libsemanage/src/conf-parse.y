@@ -281,12 +281,12 @@ optimize_policy:  OPTIMIZE_POLICY '=' ARG {
 }
 
 command_block: 
-                command_start external_opts BLOCK_END  {
+                command_start external_opts BLOCK_END /* {
                         if (new_external->path == NULL) {
                                 parse_errors++;
                                 YYABORT;
                         }
-                }
+                } */
         ;
 
 command_start:
@@ -341,7 +341,13 @@ external_opts:  external_opt external_opts
         |       /* empty */
         ;
 
-external_opt:   PROG_PATH '=' ARG  { PASSIGN(new_external->path, $3); }
+external_opt:   PROG_PATH '=' ARG  { if (strcasecmp($3, "none") != 0) {
+                                         PASSIGN(new_external->path, $3);
+                    } else {
+                                         free(new_external->path);
+                                         new_external->path = NULL;
+                                     }
+                                   }
         |       PROG_ARGS '=' ARG  { PASSIGN(new_external->args, $3); }
         ;
 
@@ -379,6 +385,7 @@ static int semanage_conf_init(semanage_conf_t * conf)
 	} else {
 		conf->load_policy->path = strdup("/usr/sbin/load_policy");
 	}
+
 	if (conf->load_policy->path == NULL) {
 		return -1;
 	}
