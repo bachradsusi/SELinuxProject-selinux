@@ -52,7 +52,7 @@ static int parse_errors;
 
 %}
 
-%name-prefix "semanage_"
+%define api.prefix {semanage_}
 
 %union {
         int d;
