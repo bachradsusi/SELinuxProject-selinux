@@ -207,6 +207,14 @@ rpm -q --qf '[%{FILESTATES} %{FILENAMES}\n]' "$1" | grep '^0 ' | cut -f2- -d ' '
 [ ${PIPESTATUS[0]} != 0 ] && echo "$1 not found" >/dev/stderr
 }
 
+# unmount tmp bind mount before exit
+umount_TMP_MOUNT() {
+	if [ -n "$TMP_MOUNT" ]; then
+	     umount "${TMP_MOUNT}${m}"
+	fi
+	exit 130
+}
+
 #
 # restore
 # if called with -n will only check file context
@@ -251,6 +259,7 @@ case "$RESTORE_MODE" in
 	    else
 	        # we bind mount so we can fix the labels of files that have already been
 	        # mounted over
+	        trap umount_TMP_MOUNT SIGINT
 	        for m in `echo $FILESYSTEMSRW`; do
 	            TMP_MOUNT="$(mktemp -d)"
 	            test -z ${TMP_MOUNT+x} && echo "Unable to find temporary directory!" && exit 1
@@ -261,6 +270,7 @@ case "$RESTORE_MODE" in
 	            umount "${TMP_MOUNT}${m}" || exit 1
 	            rm -rf "${TMP_MOUNT}" || echo "Error cleaning up."
 	        done;
+	        trap SIGINT
 	    fi
 	else
 	    echo >&2 "fixfiles: No suitable file systems found"
