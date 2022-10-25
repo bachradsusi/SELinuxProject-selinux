@@ -175,7 +175,7 @@ static int avc_init_internal(const char *prefix,
 	rc = sidtab_init(&avc_sidtab);
 	if (rc) {
 		avc_log(SELINUX_ERROR,
-			"%s:  unable to initialize SID table\n",
+			"%s:  unable to initialize SID table",
 			avc_prefix);
 		goto out;
 	}
@@ -183,7 +183,7 @@ static int avc_init_internal(const char *prefix,
 	avc_audit_buf = (char *)avc_malloc(AVC_AUDIT_BUFSIZE);
 	if (!avc_audit_buf) {
 		avc_log(SELINUX_ERROR,
-			"%s:  unable to allocate audit buffer\n",
+			"%s:  unable to allocate audit buffer",
 			avc_prefix);
 		rc = -1;
 		goto out;
@@ -193,7 +193,7 @@ static int avc_init_internal(const char *prefix,
 		new = avc_malloc(sizeof(*new));
 		if (!new) {
 			avc_log(SELINUX_WARNING,
-				"%s:  warning: only got %d av entries\n",
+				"%s:  warning: only got %d av entries",
 				avc_prefix, i);
 			break;
 		}
@@ -206,7 +206,7 @@ static int avc_init_internal(const char *prefix,
 		rc = security_getenforce();
 		if (rc < 0) {
 			avc_log(SELINUX_ERROR,
-				"%s:  could not determine enforcing mode: %m\n",
+				"%s:  could not determine enforcing mode: %m",
 				avc_prefix);
 			goto out;
 		}
@@ -216,7 +216,7 @@ static int avc_init_internal(const char *prefix,
 	rc = selinux_status_open(0);
 	if (rc < 0) {
 		avc_log(SELINUX_ERROR,
-			"%s: could not open selinux status page: %d (%m)\n",
+			"%s: could not open selinux status page: %d (%m)",
 			avc_prefix, errno);
 		goto out;
 	}
@@ -292,7 +292,7 @@ void avc_av_stats(void)
 	avc_release_lock(avc_lock);
 
 	avc_log(SELINUX_INFO, "%s:  %u AV entries and %d/%d buckets used, "
-		"longest chain length %d\n", avc_prefix,
+		"longest chain length %d", avc_prefix,
 		avc_cache.active_nodes,
 		slots_used, AVC_CACHE_SLOTS, max_chain_len);
 }
@@ -473,7 +473,7 @@ static int avc_insert(security_id_t ssid, security_id_t tsid,
 
 	if (ae->avd.seqno < avc_cache.latest_notif) {
 		avc_log(SELINUX_WARNING,
-			"%s:  seqno %u < latest_notif %u\n", avc_prefix,
+			"%s:  seqno %u < latest_notif %u", avc_prefix,
 			ae->avd.seqno, avc_cache.latest_notif);
 		errno = EAGAIN;
 		rc = -1;
@@ -613,7 +613,7 @@ static int avc_ratelimit(void)
 		avc_release_lock(ratelimit_lock);
 		if (lost) {
 			avc_log(SELINUX_WARNING,
-				"%s:  %d messages suppressed.\n", avc_prefix,
+				"%s:  %d messages suppressed.", avc_prefix,
 				lost);
 		}
 		rc = 1;

@@ -21,6 +21,12 @@ default_selinux_log(int type __attribute__((unused)), const char *fmt, ...)
 	va_start(ap, fmt);
 	rc = vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	if (rc > 0) {
+		if (fputc('\n', stderr) != EOF)
+			rc++;
+		else
+			rc = EOF;
+	}
 	return rc;
 }
 
