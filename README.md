@@ -81,7 +81,6 @@ apt-get install --no-install-recommends --no-install-suggests \
     libpcre2-dev \
     pkgconf \
     python3 \
-    python3-distutils \
     systemd \
     xmlto
 
