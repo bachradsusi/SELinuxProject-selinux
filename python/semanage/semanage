@@ -238,30 +238,22 @@ def parser_add_level(parser, name):
 
 
 def parser_add_range(parser, name):
-    parser.add_argument('-r', '--range', default='',
-                        help=_('''
-MLS/MCS Security Range (MLS/MCS Systems only)
-SELinux Range  for SELinux login mapping
-defaults to the SELinux user record range.
-SELinux Range for SELinux user defaults to s0.
-'''))
+    parser.add_argument('-r', '--range', default='', help=_(
+        "MLS/MCS Security Range (MLS/MCS Systems only) SELinux Range for SELinux login mapping defaults to the SELinux user record range. \
+SELinux Range for SELinux user defaults to s0."
+    ))
 
 
 def parser_add_proto(parser, name):
-    parser.add_argument('-p', '--proto', help=_('''
-    Protocol  for  the specified port (tcp|udp|dccp|sctp) or internet protocol
-    version for the specified node (ipv4|ipv6).
-'''))
+    parser.add_argument('-p', '--proto', help=_(
+        "Protocol for the specified port (tcp|udp|dccp|sctp) or internet protocol version for the specified node (ipv4|ipv6)."
+    ))
 
 def parser_add_subnet_prefix(parser, name):
-    parser.add_argument('-x', '--subnet_prefix', help=_('''
-    Subnet prefix for  the specified infiniband ibpkey.
-'''))
+    parser.add_argument('-x', '--subnet_prefix', help=_('Subnet prefix for  the specified infiniband ibpkey.'))
 
 def parser_add_ibdev_name(parser, name):
-    parser.add_argument('-z', '--ibdev_name', help=_('''
-    Name for the specified infiniband end port.
-'''))
+    parser.add_argument('-z', '--ibdev_name', help=_("Name for the specified infiniband end port."))
 
 def parser_add_modify(parser, name):
     parser.add_argument('-m', '--modify', dest='action', action='store_const', const='modify', help=_("Modify a record of the %s object type") % name)
@@ -372,10 +364,10 @@ If you do not specify a file type, the file type will default to "all files".
     parser_add_extract(fcontext_action, "fcontext")
     parser_add_deleteall(fcontext_action, "fcontext")
 
-    fcontextParser.add_argument('-e', '--equal', help=_('''Substitute  target  path with sourcepath when generating default
-                                                                  label.  This is used with fcontext. Requires source  and  target
-                                                                  path  arguments.  The context labeling for the target subtree is
-                                                                  made equivalent to that defined for the source.'''))
+    fcontextParser.add_argument('-e', '--equal', help=_(
+        "Substitute target path with sourcepath when generating default label. This is used with fcontext. Requires source and target \
+path arguments. The context labeling for the target subtree is made equivalent to that defined for the source."
+    ))
     fcontextParser.add_argument('-f', '--ftype', default="", choices=["a", "f", "d", "c", "b", "s", "l", "p"], help=_(ftype_help))
     parser_add_seuser(fcontextParser, "fcontext")
     parser_add_type(fcontextParser, "fcontext")
@@ -426,9 +418,7 @@ def setupUserParser(subparsers):
     parser_add_range(userParser, "user")
     userParser.add_argument('-R', '--roles', default=[],
                             action=CheckRole,
-                            help=_('''
-SELinux Roles.  You must enclose multiple roles within quotes, separate by spaces. Or specify -R multiple times.
-'''))
+                            help=_("SELinux Roles. You must enclose multiple roles within quotes, separate by spaces. Or specify -R multiple times."))
     userParser.add_argument('-P', '--prefix', default="user", help=argparse.SUPPRESS)
     userParser.add_argument('selinux_name', nargs='?', default=None, help=_('selinux_name'))
     userParser.set_defaults(func=handleUser)
@@ -901,9 +891,9 @@ def setupImportParser(subparsers):
 def createCommandParser():
     commandParser = seParser(prog='semanage',
                              formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                             description='''semanage is used to configure certain elements
-                                                            of SELinux policy with-out requiring modification
-                                                            to or recompilation from policy source.''')
+                             description=_(
+            "semanage is used to configure certain elements of SELinux policy with-out requiring modification or recompilation from policy source."
+                             ))
 
     #To add a new subcommand define the parser for it in a function above and call it here.
     subparsers = commandParser.add_subparsers(dest='subcommand')
