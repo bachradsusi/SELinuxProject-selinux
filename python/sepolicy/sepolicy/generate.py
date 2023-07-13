@@ -1262,13 +1262,25 @@ allow %s_t %s_t:%s_socket name_%s;
         return fcfile
 
     def __extract_rpms(self):
-        import yum
-        yb = yum.YumBase()
-        yb.setCacheDir()
+        
+        import libdnf5
+        
+        base = libdnf5.base.Base()
+        base.load_config_from_file()
+        base.setup()
+        repo_sack = base.get_repo_sack()
+        repo_sack.create_repos_from_system_configuration()
+        repo_sack.update_and_load_enabled_repos(True)
+        
+        # yb = yum.YumBase()
+        # yb.setCacheDir()
 
-        for pkg in yb.rpmdb.searchProvides(self.program):
-            self.rpms.append(pkg.name)
-            for fname in pkg.dirlist + pkg.filelist + pkg.ghostlist:
+        query = libdnf5.rpm.PackageQuery(base)
+        query.filter_file([self.program])
+        
+        for pkg in query:
+            self.rpms.append(pkg.get_name())
+            for fname in pkg.get_files():
                 for b in self.DEFAULT_DIRS:
                     if b == "/etc":
                         continue
@@ -1277,9 +1289,10 @@ allow %s_t %s_t:%s_socket name_%s;
                             self.add_file(fname)
                         else:
                             self.add_dir(fname)
-
-            for bpkg in yb.rpmdb.searchNames([pkg.base_package_name]):
-                for fname in bpkg.dirlist + bpkg.filelist + bpkg.ghostlist:
+            bquery = libdnf5.rpm.PackageQuery(base)
+            bquery.filter_name([pkg.get_source_name()])
+            for bpkg in bquery:
+                for fname in bpkg.get_files():
                     for b in self.DEFAULT_DIRS:
                         if b == "/etc":
                             continue
@@ -1288,20 +1301,6 @@ allow %s_t %s_t:%s_socket name_%s;
                                 self.add_file(fname)
                             else:
                                 self.add_dir(fname)
-
-        # some packages have own systemd subpackage
-        # tor-systemd for example
-        binary_name = self.program.split("/")[-1]
-        for bpkg in yb.rpmdb.searchNames(["%s-systemd" % binary_name]):
-            for fname in bpkg.filelist + bpkg.ghostlist + bpkg.dirlist:
-                for b in self.DEFAULT_DIRS:
-                    if b == "/etc":
-                        continue
-                    if fname.startswith(b):
-                        if os.path.isfile(fname):
-                            self.add_file(fname)
-                        else:
-                            self.add_dir(fname)
 
     def gen_writeable(self):
         try:
