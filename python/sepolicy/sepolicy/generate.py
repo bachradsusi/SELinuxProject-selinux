@@ -1262,13 +1262,24 @@ allow %s_t %s_t:%s_socket name_%s;
         return fcfile
 
     def __extract_rpms(self):
-        import yum
-        yb = yum.YumBase()
-        yb.setCacheDir()
+        
+        import dnf
 
-        for pkg in yb.rpmdb.searchProvides(self.program):
+        base = dnf.Base()
+        base.read_all_repos()
+        base.fill_sack(load_system_repo=True)
+
+        query = base.sack.query()
+
+        a = query.available()
+        a = a.filter(file='/usr/bin/mysqld_safe')
+
+        # query = libdnf5.rpm.PackageQuery(base)
+        # query.filter_file([self.program])
+
+        for pkg in a:
             self.rpms.append(pkg.name)
-            for fname in pkg.dirlist + pkg.filelist + pkg.ghostlist:
+            for fname in pkg.files:
                 for b in self.DEFAULT_DIRS:
                     if b == "/etc":
                         continue
@@ -1277,9 +1288,10 @@ allow %s_t %s_t:%s_socket name_%s;
                             self.add_file(fname)
                         else:
                             self.add_dir(fname)
-
-            for bpkg in yb.rpmdb.searchNames([pkg.base_package_name]):
-                for fname in bpkg.dirlist + bpkg.filelist + bpkg.ghostlist:
+            b = query.available()
+            b = b.filter(provides=pkg.source_name)
+            for bpkg in b:
+                for fname in bpkg.files:
                     for b in self.DEFAULT_DIRS:
                         if b == "/etc":
                             continue
@@ -1288,20 +1300,6 @@ allow %s_t %s_t:%s_socket name_%s;
                                 self.add_file(fname)
                             else:
                                 self.add_dir(fname)
-
-        # some packages have own systemd subpackage
-        # tor-systemd for example
-        binary_name = self.program.split("/")[-1]
-        for bpkg in yb.rpmdb.searchNames(["%s-systemd" % binary_name]):
-            for fname in bpkg.filelist + bpkg.ghostlist + bpkg.dirlist:
-                for b in self.DEFAULT_DIRS:
-                    if b == "/etc":
-                        continue
-                    if fname.startswith(b):
-                        if os.path.isfile(fname):
-                            self.add_file(fname)
-                        else:
-                            self.add_dir(fname)
 
     def gen_writeable(self):
         try:
