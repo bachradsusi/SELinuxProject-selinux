@@ -995,9 +995,11 @@ static struct spec **lookup_all(struct selabel_handle *rec,
 		key = clean_key;
 	}
 
-	sub = selabel_sub_key(data, key);
-	if (sub)
-		key = sub;
+	do {
+		sub = selabel_sub_key(data, key);
+		if (sub)
+			key = sub;
+	} while (sub);
 
 	file_stem = find_stem_from_file(data, key);
 	mode &= S_IFMT;
