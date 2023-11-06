@@ -269,6 +269,11 @@ class Sandbox:
             copyfile(f, homedir, self.__homedir)
             copyfile(f, "/tmp", self.__tmpdir)
             copyfile(f, "/var/tmp", self.__tmpdir)
+            # copyfile(f, "/run/user/1000", self.__runuserdir)
+            # os.system("sudo mount --bind /run/user/1000/wayland-1 " + self.__runuserdir + "/wayland-1")
+            # os.system("sudo mount --bind /run/user/1000/wayland-1 " + self.__runuserdir + "")
+            # print(self.__runuserdir)
+            # os.system("ls "+self.__runuserdir + " /run/user/1000")
 
     def __setup_sandboxrc(self, wm="/usr/bin/openbox"):
         execfile = self.__homedir + "/.sandboxrc"
@@ -462,7 +467,7 @@ sandbox [-h] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-
 
     def __execute(self):
         try:
-            cmds = [SEUNSHARE, "-Z", self.__execcon]
+            cmds = [SEUNSHARE, "-v", "-Z", self.__execcon]
             if self.__options.usecaps:
                 cmds.append('-C')
             if self.__mount:
@@ -487,6 +492,21 @@ sandbox [-h] [-l level ] [-[X|M] [-H homedir] [-T tempdir]] [-I includefile ] [-
                     cmds += ["--", SANDBOXSH, self.__options.windowsize, dpi]
                 else:
                     cmds += ["--"] + self.__paths
+                cmds = """/usr/bin/bwrap
+    --ro-bind / / \
+    --proc /proc \
+    --dev /dev \
+    --unshare-user \
+    --new-session \
+    --bind /home/user/sandbox/tmp /tmp \
+    --bind /tmp/.X11-unix /tmp/.X11-unix \
+    --bind /run/user/1000/wayland-1 /run/user/1000/wayland-1 \
+    """.split() + \
+                ["--exec-label", self.__execcon] + \
+                ["--bind", self.__homedir, "/home/user"] + \
+                ["--", SANDBOXSH, self.__options.windowsize, dpi]
+                print(cmds)
+
                 return subprocess.Popen(cmds).wait()
 
             pid = os.fork()

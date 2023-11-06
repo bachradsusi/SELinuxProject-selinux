@@ -765,6 +765,7 @@ int main(int argc, char **argv) {
 
 	if (child == 0) {
 		char *display = NULL;
+		char *w_display = NULL;
 		char *LANG = NULL;
 		char *RUNTIME_DIR = NULL;
 		int rc = -1;
@@ -824,6 +825,14 @@ int main(int argc, char **argv) {
 		}
 
 		/* construct a new environment */
+		if ((w_display = getenv("WAYLAND_DISPLAY")) != NULL) {
+			if ((w_display = strdup(w_display)) == NULL) {
+				perror(_("Out of memory"));
+				goto childerr;
+			}
+		}
+
+		/* construct a new environment */
 		if ((LANG = getenv("LANG")) != NULL) {
 			if ((LANG = strdup(LANG)) == NULL) {
 				perror(_("Out of memory"));
@@ -837,6 +846,8 @@ int main(int argc, char **argv) {
 		}
 		if (display)
 			rc |= setenv("DISPLAY", display, 1);
+		if (w_display)
+			rc |= setenv("WAYLAND_DISPLAY", w_display, 1);
 		if (LANG)
 			rc |= setenv("LANG", LANG, 1);
 		if (RUNTIME_DIR)

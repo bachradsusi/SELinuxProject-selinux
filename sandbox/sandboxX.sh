@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 trap "" TERM
 context=`id -Z | secon -t -l -P`
 export TITLE="Sandbox $context -- `grep ^#TITLE: ~/.sandboxrc | /usr/bin/cut -b8-80`"
@@ -20,7 +20,11 @@ cat > ~/.config/openbox/rc.xml << EOF
 </openbox_config>
 EOF
 
-(/usr/bin/Xephyr -resizeable -title "$TITLE" -terminate -screen $SCREENSIZE -dpi $DPI -nolisten tcp -displayfd 5 5>&1 2>/dev/null) | while read D; do
+ls -a /run/user/1000
+echo $WAYLAND_DISPLAY
+
+# (/usr/bin/Xephyr -resizeable -title "$TITLE" -terminate -screen $SCREENSIZE -dpi $DPI -nolisten tcp -displayfd 5 5>&1 2>/dev/null) | while read D; do
+(/usr/bin/Xwayland -v -v -terminate -dpi $DPI -retro -geometry $SCREENSIZE -decorate -displayfd 5 5>&1) | while read D; do
     export DISPLAY=:$D
     cat > ~/seremote << __EOF
 #!/bin/sh
