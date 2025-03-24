@@ -257,3 +257,8 @@ LIBSELINUX_3.8 {
   global:
     matchpathcon_filespec_add64;
 } LIBSELINUX_3.5;
+
+LIBSELINUX_3.9 {
+  global:
+    selinux_binary_policy_path_ro;
+} LIBSELINUX_3.8;

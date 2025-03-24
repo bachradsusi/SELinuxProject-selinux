@@ -92,7 +92,9 @@ extern int selinux_page_size ;
 )
 
 #define SELINUXDIR "/etc/selinux/"
+#define SELINUXDIR_RO "/usr/lib/selinux/"
 #define SELINUXCONFIG SELINUXDIR "config"
+#define SELINUXCONFIG_RO SELINUXDIR_RO "config"
 
 extern int has_selinux_config ;
 

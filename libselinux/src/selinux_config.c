@@ -61,6 +61,8 @@ static void init_selinux_config(void);
 
 /* New layout is relative to SELINUXDIR/policytype. */
 static char *file_paths[NEL];
+/* Read only layout is relative to SELINUXDIR_RO/policytype. */
+static char *file_paths_ro[NEL];
 #define L1(l) L2(l)
 #define L2(l)str##l
 static const union file_path_suffixes_data {
@@ -90,6 +92,9 @@ int selinux_getenforcemode(int *enforce)
 {
 	int ret = -1;
 	FILE *cfg = fopen(SELINUXCONFIG, "re");
+	if (cfg == NULL) {
+		cfg = fopen(SELINUXCONFIG_RO, "re");
+	}
 	if (cfg) {
 		char *buf;
 		char *tag;
@@ -153,6 +158,7 @@ static int setpolicytype(const char *type)
 }
 
 static char *selinux_policyroot = NULL;
+static char *selinux_policyroot_ro = NULL;
 static const char *selinux_rootpath = SELINUXDIR;
 
 static void init_selinux_config(void)
@@ -167,6 +173,10 @@ static void init_selinux_config(void)
 		return;
 
 	fp = fopen(SELINUXCONFIG, "re");
+	if (fp == NULL) {
+		fp = fopen(SELINUXCONFIG_RO, "re");
+		fprintf(stderr, "SELINUX: trying %s\n", SELINUXCONFIG_RO);
+	}
 	if (fp) {
 		__fsetlocking(fp, FSETLOCKING_BYCALLER);
 		while ((len = getline(&line_buf, &line_len, fp)) > 0) {
@@ -230,14 +240,23 @@ static void init_selinux_config(void)
 
 	if (asprintf(&selinux_policyroot, "%s%s", SELINUXDIR, selinux_policytype) == -1)
 		return;
+	if (asprintf(&selinux_policyroot_ro, "%s%s", SELINUXDIR_RO, selinux_policytype) == -1)
+		return;
 
-	for (i = 0; i < NEL; i++)
+	for (i = 0; i < NEL; i++) {
 		if (asprintf(&file_paths[i], "%s%s",
 			     selinux_policyroot,
 			     file_path_suffixes_data.str +
 			     file_path_suffixes_idx[i])
 		    == -1)
 			return;
+		if (asprintf(&file_paths_ro[i], "%s%s",
+			     selinux_policyroot_ro,
+			     file_path_suffixes_data.str +
+			     file_path_suffixes_idx[i])
+			== -1)
+			return;
+	}
 }
 
 static void fini_selinux_policyroot(void) __attribute__ ((destructor));
@@ -250,6 +269,8 @@ static void fini_selinux_policyroot(void)
 	for (i = 0; i < NEL; i++) {
 		free(file_paths[i]);
 		file_paths[i] = NULL;
+		free(file_paths_ro[i]);
+		file_paths_ro[i] = NULL;
 	}
 	free(selinux_policytype);
 	selinux_policytype = NULL;
@@ -266,6 +287,12 @@ static const char *get_path(int idx)
 {
 	__selinux_once(once, init_selinux_config);
 	return file_paths[idx];
+}
+
+static const char *get_path_ro(int idx)
+{
+	__selinux_once(once, init_selinux_config);
+	return file_paths_ro[idx];
 }
 
 const char *selinux_default_type_path(void)
@@ -345,6 +372,10 @@ const char *selinux_binary_policy_path(void)
 	return get_path(BINPOLICY);
 }
 
+const char *selinux_binary_policy_path_ro(void)
+{
+	return get_path_ro(BINPOLICY);
+}
 
 const char *selinux_current_policy_path(void)
 {

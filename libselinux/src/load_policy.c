@@ -128,12 +128,19 @@ int selinux_mkload_policy(int preservebools __attribute__((unused)))
 	snprintf(path, sizeof(path), "%s.%d",
 		 selinux_binary_policy_path(), vers);
 	fd = open(path, O_RDONLY | O_CLOEXEC);
-	while (fd < 0 && errno == ENOENT
-	       && --vers >= minvers) {
-		/* Check prior versions to see if old policy is available */
+	while (fd < 0 && errno == ENOENT) {
+		/* Check if policy is available in /usr/lib */
+		/* FIXME: first look for all policy.* in /etc and use /usr/lib when there's none */
 		snprintf(path, sizeof(path), "%s.%d",
-			 selinux_binary_policy_path(), vers);
+			 selinux_binary_policy_path_ro(), vers);
 		fd = open(path, O_RDONLY | O_CLOEXEC);
+
+		if (fd < 0 && --vers >= minvers) {
+			/* Check prior versions to see if old policy is available */
+			snprintf(path, sizeof(path), "%s.%d",
+				 selinux_binary_policy_path(), vers);
+			fd = open(path, O_RDONLY | O_CLOEXEC);
+		}
 	}
 	if (fd < 0) {
 		fprintf(stderr,
@@ -142,6 +149,7 @@ int selinux_mkload_policy(int preservebools __attribute__((unused)))
 		goto dlclose;
 	}
 
+	fprintf(stderr, "SELinux: using policy %s\n", path);
 	if (fstat(fd, &sb) < 0) {
 		fprintf(stderr,
 			"SELinux:  Could not stat policy file %s:  %m\n",
