@@ -2303,7 +2303,7 @@ static int semanage_direct_get_module_info(semanage_handle_t *sh,
 		/* lookup module ext */
 		ret = semanage_module_get_path(sh,
 				       *modinfo,
-				       SEMANAGE_MODULE_PATH_LANG_EXT_RO,
+				       SEMANAGE_MODULE_PATH_LANG_EXT + SEMANAGE_MODULE_PATH_RO,
 				       fn,
 				       sizeof(fn));
 		if (ret != 0) {
@@ -2619,7 +2619,7 @@ static int semanage_direct_list_all(semanage_handle_t *sh,
 			status = -1;
 			goto cleanup;
 		}
-		ro_paths = SEMANAGE_MODULE_PATH_PRIORITY_RO;
+		ro_paths = SEMANAGE_MODULE_PATH_RO;
 	}
 
 	/* for each priority directory */
@@ -2645,7 +2645,7 @@ static int semanage_direct_list_all(semanage_handle_t *sh,
 		/* get the priority path */
 		ret = semanage_module_get_path(sh,
 					       &modinfo,
-					       SEMANAGE_MODULE_PATH_PRIORITY + ro_paths,
+						   SEMANAGE_MODULE_PATH_PRIORITY + ro_paths,
 					       priority_path,
 					       sizeof(priority_path));
 		if (ret != 0) {
