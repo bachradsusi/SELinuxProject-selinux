@@ -442,6 +442,8 @@ int semanage_module_get_path(semanage_handle_t *sh,
 		semanage_path(SEMANAGE_ACTIVE, SEMANAGE_MODULES);
 
 	switch (type) {
+		case SEMANAGE_MODULE_PATH_PRIORITY_RO:
+			modules_path = semanage_path_ro(SEMANAGE_ACTIVE, SEMANAGE_MODULES);
 		case SEMANAGE_MODULE_PATH_PRIORITY:
 			/* verify priority */
 			ret = semanage_module_validate_priority(modinfo->priority);
@@ -503,6 +505,8 @@ int semanage_module_get_path(semanage_handle_t *sh,
 		case SEMANAGE_MODULE_PATH_CIL:
 			if (file == NULL) file = "cil";
 			/* FALLTHRU */
+		case SEMANAGE_MODULE_PATH_LANG_EXT_RO:
+			modules_path = semanage_path_ro(SEMANAGE_ACTIVE, SEMANAGE_MODULES);
 		case SEMANAGE_MODULE_PATH_LANG_EXT:
 			if (file == NULL) file = "lang_ext";
 

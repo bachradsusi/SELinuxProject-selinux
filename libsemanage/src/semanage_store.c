@@ -74,6 +74,7 @@ enum semanage_file_defs {
 };
 
 static char *semanage_paths[SEMANAGE_NUM_STORES][SEMANAGE_STORE_NUM_PATHS];
+static char *semanage_paths_ro[SEMANAGE_NUM_STORES][SEMANAGE_STORE_NUM_PATHS];
 static char *semanage_files[SEMANAGE_NUM_FILES] = { NULL };
 static int semanage_paths_initialized = 0;
 
@@ -196,6 +197,29 @@ static int semanage_init_store_paths(const char *root)
 			if (asprintf(&semanage_paths[i][j], "%s%s%s",
 				     root, semanage_store_paths[i], semanage_sandbox_paths[j]) < 0) {
 				semanage_paths[i][j] = NULL;
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+/* This initializes the paths inside the stores, this is only necessary
+ * when directly accessing the store
+ */
+static int semanage_init_store_paths_ro(const char *root)
+{
+	int i, j;
+
+	if (!root)
+		return -1;
+
+	for (i = 0; i < SEMANAGE_NUM_STORES; i++) {
+		for (j = 0; j < SEMANAGE_STORE_NUM_PATHS; j++) {
+			if (asprintf(&semanage_paths_ro[i][j], "%s%s%s",
+				     root, semanage_store_paths[i], semanage_sandbox_paths[j]) < 0) {
+				semanage_paths_ro[i][j] = NULL;
 				return -1;
 			}
 		}
@@ -393,6 +417,7 @@ int semanage_check_init(semanage_handle_t *sh, const char *prefix)
 	int rc;
 	if (semanage_paths_initialized == 0) {
 		char root[PATH_MAX];
+		char ro_root[PATH_MAX];
 
 		rc = snprintf(root,
 			      sizeof(root),
@@ -403,11 +428,25 @@ int semanage_check_init(semanage_handle_t *sh, const char *prefix)
 		if (rc < 0 || rc >= (int)sizeof(root))
 			return -1;
 
+		rc = snprintf(ro_root,
+			      sizeof(ro_root),
+			      "%s%s/%s",
+			      semanage_root(),
+			      sh->conf->ro_store_root_path,
+			      sh->conf->store_path);
+
+		if (rc < 0 || rc >= (int)sizeof(root))
+			return -1;
+
 		rc = semanage_init_paths(root);
 		if (rc)
 			return rc;
 
 		rc = semanage_init_store_paths(root);
+		if (rc)
+			return rc;
+
+		rc = semanage_init_store_paths_ro(ro_root);
 		if (rc)
 			return rc;
 
@@ -447,6 +486,13 @@ const char *semanage_path(enum semanage_store_defs store,
 {
 	assert(semanage_paths[store][path_name]);
 	return semanage_paths[store][path_name];
+}
+
+const char *semanage_path_ro(enum semanage_store_defs store,
+			  enum semanage_sandbox_defs path_name)
+{
+	assert(semanage_paths_ro[store][path_name]);
+	return semanage_paths_ro[store][path_name];
 }
 
 /* Given a store location (tmp or selinux) and a definition

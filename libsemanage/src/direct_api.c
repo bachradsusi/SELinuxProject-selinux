@@ -2300,6 +2300,21 @@ static int semanage_direct_get_module_info(semanage_handle_t *sh,
 	fp = fopen(fn, "re");
 
 	if (fp == NULL) {
+		/* lookup module ext */
+		ret = semanage_module_get_path(sh,
+				       *modinfo,
+				       SEMANAGE_MODULE_PATH_LANG_EXT_RO,
+				       fn,
+				       sizeof(fn));
+		if (ret != 0) {
+			status = -1;
+			goto cleanup;
+	}
+
+	fp = fopen(fn, "re");
+
+	}
+	if (fp == NULL) {
 		ERR(sh,
 		    "Unable to open %s module lang ext file at %s.",
 		    (*modinfo)->name, fn);
@@ -2560,6 +2575,7 @@ static int semanage_direct_list_all(semanage_handle_t *sh,
 	void *tmp = NULL;
 
 	const char *toplevel = NULL;
+	int ro_paths = 0;
 
 	struct dirent **priorities = NULL;
 	int priorities_len = 0;
@@ -2590,10 +2606,20 @@ static int semanage_direct_list_all(semanage_handle_t *sh,
 				 &priorities,
 				 semanage_priorities_filename_select,
 				 versionsort);
-	if (priorities_len == -1) {
-		ERR(sh, "Error while scanning directory %s.", toplevel);
-		status = -1;
-		goto cleanup;
+	if (priorities_len <= 0) {
+		// ERR(sh, "Error while scanning directory %s.", toplevel);
+		toplevel = semanage_path_ro(SEMANAGE_ACTIVE, SEMANAGE_MODULES);
+		ERR(sh, "Trying %s", toplevel);
+		priorities_len = scandir(toplevel,
+				 &priorities,
+				 semanage_priorities_filename_select,
+				 versionsort);
+		if (priorities_len == -1) {
+			ERR(sh, "Error while scanning directory %s.", toplevel);
+			status = -1;
+			goto cleanup;
+		}
+		ro_paths = SEMANAGE_MODULE_PATH_PRIORITY_RO;
 	}
 
 	/* for each priority directory */
@@ -2619,7 +2645,7 @@ static int semanage_direct_list_all(semanage_handle_t *sh,
 		/* get the priority path */
 		ret = semanage_module_get_path(sh,
 					       &modinfo,
-					       SEMANAGE_MODULE_PATH_PRIORITY,
+					       SEMANAGE_MODULE_PATH_PRIORITY + ro_paths,
 					       priority_path,
 					       sizeof(priority_path));
 		if (ret != 0) {

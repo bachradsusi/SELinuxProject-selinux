@@ -101,6 +101,9 @@ extern const char *semanage_fname(enum semanage_sandbox_defs file_enum);
 extern const char *semanage_path(enum semanage_store_defs store,
 				 enum semanage_sandbox_defs file);
 
+extern const char *semanage_path_ro(enum semanage_store_defs store,
+				 enum semanage_sandbox_defs file);
+
 extern const char *semanage_final_path(enum semanage_final_defs root,
 				       enum semanage_final_path_defs suffix);
 
