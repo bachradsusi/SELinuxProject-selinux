@@ -575,6 +575,7 @@ int semanage_create_store(semanage_handle_t * sh, int create)
 			return -1;
 		}
 	}
+#if 0
 	path = semanage_path(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL);
 	if (stat(path, &sb) == -1) {
 		if (errno == ENOENT && create) {
@@ -627,6 +628,7 @@ int semanage_create_store(semanage_handle_t * sh, int create)
 			return -1;
 		}
 	}
+#endif
 	path = semanage_files[SEMANAGE_READ_LOCK];
 	if (stat(path, &sb) == -1) {
 		if (errno == ENOENT && create) {
@@ -1004,9 +1006,14 @@ int semanage_make_sandbox(semanage_handle_t * sh)
 	if (mkdir(sandbox, S_IRWXU) == -1 ||
 	    semanage_copy_dir(sh, semanage_path(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL),
 			      sandbox) == -1) {
-		umask(mask);
-		ERR(sh, "Could not copy files to sandbox %s.", sandbox);
-		goto cleanup;
+
+		if (semanage_copy_dir(sh, semanage_path_ro(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL),
+			      sandbox) == -1) {
+			umask(mask);
+			ERR(sh, "Could not copy files to sandbox %s.", sandbox);
+			goto cleanup;
+		}
+		fprintf(stderr, "Copy %s to %s\n",  semanage_path_ro(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL), sandbox);
 	}
 	umask(mask);
 	return 0;
@@ -1819,7 +1826,7 @@ static int semanage_commit_sandbox(semanage_handle_t * sh)
 		goto cleanup;
 	}
 
-	if (semanage_rename(sh, active, backup) == -1) {
+	if ((semanage_rename(sh, active, backup) == -1) && (errno != ENOENT)) {
 		ERR(sh, "Error while renaming %s to %s.", active, backup);
 		retval = -1;
 		goto cleanup;
@@ -1861,7 +1868,7 @@ static int semanage_commit_sandbox(semanage_handle_t * sh)
 		int errsv = errno;
 		if (semanage_remove_directory(backup) != 0) {
 			ERR(sh, "Could not delete previous directory %s.", backup);
-			retval = -1;
+			retval = 0;
 			goto cleanup;
 		}
 		errno = errsv;
