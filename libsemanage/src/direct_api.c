@@ -160,7 +160,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 
 	/* Object databases: local modifications */
 	if (user_base_file_dbase_init(sh,
-				      semanage_path(SEMANAGE_ACTIVE,
+				      semanage_path_active(SEMANAGE_ACTIVE,
 						    SEMANAGE_USERS_BASE_LOCAL),
 				      semanage_path(SEMANAGE_TMP,
 						    SEMANAGE_USERS_BASE_LOCAL),
@@ -168,7 +168,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (user_extra_file_dbase_init(sh,
-				       semanage_path(SEMANAGE_ACTIVE,
+				       semanage_path_active(SEMANAGE_ACTIVE,
 						     SEMANAGE_USERS_EXTRA_LOCAL),
 				       semanage_path(SEMANAGE_TMP,
 						     SEMANAGE_USERS_EXTRA_LOCAL),
@@ -182,7 +182,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (port_file_dbase_init(sh,
-				 semanage_path(SEMANAGE_ACTIVE,
+				 semanage_path_active(SEMANAGE_ACTIVE,
 					       SEMANAGE_PORTS_LOCAL),
 				 semanage_path(SEMANAGE_TMP,
 					       SEMANAGE_PORTS_LOCAL),
@@ -190,7 +190,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (iface_file_dbase_init(sh,
-				  semanage_path(SEMANAGE_ACTIVE,
+				  semanage_path_active(SEMANAGE_ACTIVE,
 						SEMANAGE_INTERFACES_LOCAL),
 				  semanage_path(SEMANAGE_TMP,
 						SEMANAGE_INTERFACES_LOCAL),
@@ -198,7 +198,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (bool_file_dbase_init(sh,
-				 semanage_path(SEMANAGE_ACTIVE,
+				 semanage_path_active(SEMANAGE_ACTIVE,
 					       SEMANAGE_BOOLEANS_LOCAL),
 				 semanage_path(SEMANAGE_TMP,
 					       SEMANAGE_BOOLEANS_LOCAL),
@@ -206,19 +206,19 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (fcontext_file_dbase_init(sh,
-				     semanage_path(SEMANAGE_ACTIVE, SEMANAGE_STORE_FC_LOCAL),
+				     semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_STORE_FC_LOCAL),
 				     semanage_path(SEMANAGE_TMP, SEMANAGE_STORE_FC_LOCAL),
 				     semanage_fcontext_dbase_local(sh)) < 0)
 		goto err;
 
 	if (fcontext_file_dbase_init(sh,
-				     semanage_path(SEMANAGE_ACTIVE, SEMANAGE_STORE_FC_HOMEDIRS),
+				     semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_STORE_FC_HOMEDIRS),
 				     semanage_path(SEMANAGE_TMP, SEMANAGE_STORE_FC_HOMEDIRS),
 				     semanage_fcontext_dbase_homedirs(sh)) < 0)
 		goto err;
 
 	if (seuser_file_dbase_init(sh,
-				   semanage_path(SEMANAGE_ACTIVE,
+				   semanage_path_active(SEMANAGE_ACTIVE,
 						 SEMANAGE_SEUSERS_LOCAL),
 				   semanage_path(SEMANAGE_TMP,
 						 SEMANAGE_SEUSERS_LOCAL),
@@ -226,7 +226,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (node_file_dbase_init(sh,
-				 semanage_path(SEMANAGE_ACTIVE,
+				 semanage_path_active(SEMANAGE_ACTIVE,
 					       SEMANAGE_NODES_LOCAL),
 				 semanage_path(SEMANAGE_TMP,
 					       SEMANAGE_NODES_LOCAL),
@@ -234,7 +234,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (ibpkey_file_dbase_init(sh,
-				   semanage_path(SEMANAGE_ACTIVE,
+				   semanage_path_active(SEMANAGE_ACTIVE,
 					         SEMANAGE_IBPKEYS_LOCAL),
 				   semanage_path(SEMANAGE_TMP,
 					         SEMANAGE_IBPKEYS_LOCAL),
@@ -242,7 +242,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (ibendport_file_dbase_init(sh,
-				      semanage_path(SEMANAGE_ACTIVE,
+				      semanage_path_active(SEMANAGE_ACTIVE,
 						    SEMANAGE_IBENDPORTS_LOCAL),
 				      semanage_path(SEMANAGE_TMP,
 						    SEMANAGE_IBENDPORTS_LOCAL),
@@ -256,7 +256,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (user_extra_file_dbase_init(sh,
-				       semanage_path(SEMANAGE_ACTIVE,
+				       semanage_path_active(SEMANAGE_ACTIVE,
 						     SEMANAGE_USERS_EXTRA),
 				       semanage_path(SEMANAGE_TMP,
 						     SEMANAGE_USERS_EXTRA),
@@ -292,7 +292,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (seuser_file_dbase_init(sh,
-				   semanage_path(SEMANAGE_ACTIVE, SEMANAGE_STORE_SEUSERS),
+				   semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_STORE_SEUSERS),
 				   semanage_path(SEMANAGE_TMP, SEMANAGE_STORE_SEUSERS),
 				   semanage_seuser_dbase_policy(sh)) < 0)
 		goto err;
@@ -305,7 +305,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	/* set the disable dontaudit value */
-	path = semanage_path(SEMANAGE_ACTIVE, SEMANAGE_DISABLE_DONTAUDIT);
+	path = semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_DISABLE_DONTAUDIT);
 
 	if (stat(path, &sb) == 0)
 		sepol_set_disable_dontaudit(sh->sepolh, 1);
