@@ -495,6 +495,17 @@ const char *semanage_path_ro(enum semanage_store_defs store,
 	return semanage_paths_ro[store][path_name];
 }
 
+const char *semanage_path_active(enum semanage_store_defs store,
+				 enum semanage_sandbox_defs path_name)
+{
+	const char *path = semanage_path(store, path_name);
+	if (access(path, F_OK) == -1)
+		path = semanage_path_ro(store, path_name);
+	return path;
+}
+
+
+
 /* Given a store location (tmp or selinux) and a definition
  * number, return a fully-qualified path to that file or directory.
  * The caller must not alter the string returned (and hence why this
@@ -665,7 +676,7 @@ int semanage_store_access_check(void)
 	int rc = -1;
 
 	/* read access on active store */
-	path = semanage_path(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL);
+	path = semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL);
 	if (access(path, R_OK | X_OK) != 0)
 		goto out;
 
@@ -2152,7 +2163,7 @@ int semanage_read_policydb(semanage_handle_t * sh, sepol_policydb_t * in,
 	FILE *infile = NULL;
 
 	if ((kernel_filename =
-	     semanage_path(SEMANAGE_ACTIVE, file)) == NULL) {
+	     semanage_path_active(SEMANAGE_ACTIVE, file)) == NULL) {
 		goto cleanup;
 	}
 	if ((infile = fopen(kernel_filename, "re")) == NULL) {

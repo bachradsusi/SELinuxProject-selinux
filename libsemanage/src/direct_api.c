@@ -286,7 +286,7 @@ int semanage_direct_connect(semanage_handle_t * sh)
 		goto err;
 
 	if (fcontext_file_dbase_init(sh,
-				     semanage_path(SEMANAGE_ACTIVE, SEMANAGE_STORE_FC),
+				     semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_STORE_FC),
 				     semanage_path(SEMANAGE_TMP, SEMANAGE_STORE_FC),
 				     semanage_fcontext_dbase_policy(sh)) < 0)
 		goto err;
