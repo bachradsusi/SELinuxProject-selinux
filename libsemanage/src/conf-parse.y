@@ -41,6 +41,7 @@ extern char *semanage_text;
 
 static int parse_module_store(char *arg);
 static int parse_store_root_path(char *arg);
+static int parse_ro_store_root_path(char *arg);
 static int parse_compiler_path(char *arg);
 static void semanage_conf_external_prog_destroy(external_prog_t *ep);
 static int new_external_prog(external_prog_t **chain);
@@ -60,7 +61,8 @@ static int parse_errors;
         char *s;
 }
 
-%token MODULE_STORE VERSION EXPAND_CHECK FILE_MODE SAVE_PREVIOUS SAVE_LINKED TARGET_PLATFORM COMPILER_DIR IGNORE_MODULE_CACHE STORE_ROOT OPTIMIZE_POLICY MULTIPLE_DECLS
+%token MODULE_STORE VERSION EXPAND_CHECK FILE_MODE SAVE_PREVIOUS SAVE_LINKED TARGET_PLATFORM COMPILER_DIR IGNORE_MODULE_CACHE
+%token STORE_ROOT RO_STORE_ROOT OPTIMIZE_POLICY MULTIPLE_DECLS
 %token LOAD_POLICY_START SETFILES_START SEFCONTEXT_COMPILE_START DISABLE_GENHOMEDIRCON HANDLE_UNKNOWN USEPASSWD IGNOREDIRS
 %token BZIP_BLOCKSIZE BZIP_SMALL REMOVE_HLL
 %token VERIFY_MOD_START VERIFY_LINKED_START VERIFY_KERNEL_START BLOCK_END
@@ -83,6 +85,7 @@ single_opt:     module_store
         |       version
         |       target_platform
         |       store_root
+        |       ro_store_root
         |       compiler_dir
         |       ignore_module_cache
         |       expand_check
@@ -112,6 +115,15 @@ module_store:   MODULE_STORE '=' ARG {
 
 store_root:     STORE_ROOT '=' ARG  {
                         if (parse_store_root_path($3) != 0) {
+                                parse_errors++;
+                                YYABORT;
+                        }
+                        free($3);
+                }
+        ;
+
+ro_store_root:     RO_STORE_ROOT '=' ARG  {
+                        if (parse_ro_store_root_path($3) != 0) {
                                 parse_errors++;
                                 YYABORT;
                         }
@@ -385,7 +397,7 @@ static int semanage_conf_init(semanage_conf_t * conf)
 	conf->store_path = strdup(basename(selinux_policy_root()));
 	conf->ignoredirs = NULL;
 	conf->store_root_path = strdup("/var/lib/selinux");
-	conf->ro_store_root_path = strdup("/usr/lib/selinux");
+	conf->ro_store_root_path = NULL;
 	conf->compiler_directory_path = strdup("/usr/libexec/selinux/hll");
 	conf->policyvers = sepol_policy_kern_vers_max();
 	conf->target_platform = SEPOL_TARGET_SELINUX;
@@ -579,6 +591,17 @@ static int parse_store_root_path(char *arg)
 
 	free(current_conf->store_root_path);
 	current_conf->store_root_path = strdup(arg);
+	return 0;
+}
+
+static int parse_ro_store_root_path(char *arg)
+{
+	if (arg == NULL) {
+		return -1;
+	}
+
+	free(current_conf->ro_store_root_path);
+	current_conf->ro_store_root_path = strdup(arg);
 	return 0;
 }
 
