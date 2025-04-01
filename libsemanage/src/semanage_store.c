@@ -76,6 +76,7 @@ enum semanage_file_defs {
 static char *semanage_paths[SEMANAGE_NUM_STORES][SEMANAGE_STORE_NUM_PATHS];
 static char *semanage_paths_ro[SEMANAGE_NUM_STORES][SEMANAGE_STORE_NUM_PATHS];
 static char *semanage_files[SEMANAGE_NUM_FILES] = { NULL };
+static char *semanage_files_ro[SEMANAGE_NUM_FILES] = { NULL };
 static int semanage_paths_initialized = 0;
 
 /* These are paths relative to the bottom of the module store */
@@ -182,6 +183,26 @@ static int semanage_init_paths(const char *root)
 	return 0;
 }
 
+/* Initialize the paths to config file, lock files and store root.
+ */
+static int semanage_init_paths_ro(const char *root)
+{
+	int i;
+
+	if (!root)
+		return -1;
+
+	for (i = 0; i < SEMANAGE_NUM_FILES; i++) {
+		if (asprintf(&semanage_files_ro[i], "%s%s",
+			     root, semanage_relative_files[i]) < 0) {
+			semanage_files_ro[i] = NULL;
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 /* This initializes the paths inside the stores, this is only necessary
  * when directly accessing the store
  */
@@ -217,11 +238,17 @@ static int semanage_init_store_paths_ro(const char *root)
 
 	for (i = 0; i < SEMANAGE_NUM_STORES; i++) {
 		for (j = 0; j < SEMANAGE_STORE_NUM_PATHS; j++) {
-			if (asprintf(&semanage_paths_ro[i][j], "%s%s%s",
-				     root, semanage_store_paths[i], semanage_sandbox_paths[j]) < 0) {
-				semanage_paths_ro[i][j] = NULL;
-				return -1;
+			if (root) {
+				if (asprintf(&semanage_paths_ro[i][j], "%s%s%s",
+							 root, semanage_store_paths[i], semanage_sandbox_paths[j]) < 0) {
+					semanage_paths_ro[i][j] = NULL;
+					return -1;
+				}
 			}
+			else {
+				semanage_paths_ro[i][j] = NULL;
+			}
+
 		}
 	}
 
@@ -428,17 +455,26 @@ int semanage_check_init(semanage_handle_t *sh, const char *prefix)
 		if (rc < 0 || rc >= (int)sizeof(root))
 			return -1;
 
-		rc = snprintf(ro_root,
-			      sizeof(ro_root),
-			      "%s%s/%s",
-			      semanage_root(),
-			      sh->conf->ro_store_root_path,
-			      sh->conf->store_path);
+		if (sh->conf->ro_store_root_path) {
+			rc = snprintf(ro_root,
+						  sizeof(ro_root),
+						  "%s%s/%s",
+						  semanage_root(),
+						  sh->conf->ro_store_root_path,
+						  sh->conf->store_path);
 
-		if (rc < 0 || rc >= (int)sizeof(root))
-			return -1;
+			if (rc < 0 || rc >= (int)sizeof(root))
+				return -1;
+		}
 
 		rc = semanage_init_paths(root);
+		if (rc)
+			return rc;
+
+		if (sh->conf->ro_store_root_path)
+			rc = semanage_init_paths_ro(ro_root);
+		else
+			rc = semanage_init_paths_ro(NULL);
 		if (rc)
 			return rc;
 
@@ -446,7 +482,10 @@ int semanage_check_init(semanage_handle_t *sh, const char *prefix)
 		if (rc)
 			return rc;
 
-		rc = semanage_init_store_paths_ro(ro_root);
+		if (sh->conf->ro_store_root_path)
+			rc = semanage_init_store_paths_ro(ro_root);
+		else
+			rc = semanage_init_store_paths_ro(NULL);
 		if (rc)
 			return rc;
 
@@ -491,7 +530,6 @@ const char *semanage_path(enum semanage_store_defs store,
 const char *semanage_path_ro(enum semanage_store_defs store,
 			  enum semanage_sandbox_defs path_name)
 {
-	assert(semanage_paths_ro[store][path_name]);
 	return semanage_paths_ro[store][path_name];
 }
 
@@ -499,8 +537,9 @@ const char *semanage_path_active(enum semanage_store_defs store,
 				 enum semanage_sandbox_defs path_name)
 {
 	const char *path = semanage_path(store, path_name);
-	if (access(path, F_OK) == -1)
-		path = semanage_path_ro(store, path_name);
+	const char *ro_path = semanage_path_ro(store, path_name);
+	if (access(path, F_OK) == -1 && ro_path)
+		return ro_path;
 	return path;
 }
 
@@ -673,12 +712,22 @@ int semanage_create_store(semanage_handle_t * sh, int create)
 int semanage_store_access_check(void)
 {
 	const char *path;
+	const char *ro_path;
 	int rc = -1;
 
 	/* read access on active store */
-	path = semanage_path_active(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL);
-	if (access(path, R_OK | X_OK) != 0)
+	path = semanage_path(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL);
+	ro_path = semanage_path_ro(SEMANAGE_ACTIVE, SEMANAGE_TOPLEVEL);
+	fprintf(stderr, "semanage_store_access_check: %s\n", path);
+	if (access(path, R_OK | X_OK) != 0) {
+		if (! ro_path)
+			goto out;
+		fprintf(stderr, "semanage_store_access_check: %s\n", ro_path);
+		if (access(ro_path, R_OK | X_OK) != 0)
+			goto out;
+		rc = SEMANAGE_CAN_READ;
 		goto out;
+	}
 
 	/* we can read the active store meaning it is managed
 	 * so now we return 0 to indicate no error */
@@ -2036,9 +2085,17 @@ int semanage_get_active_lock(semanage_handle_t * sh)
 	    semanage_get_lock(sh, "read lock", lock_file);
 	if (sh->u.direct.activelock_file_fd >= 0) {
 		return 0;
-	} else {
-		return -1;
 	}
+	lock_file = semanage_files_ro[SEMANAGE_READ_LOCK];
+	fprintf(stderr, "semanage_get_active_lock: %s\n", lock_file);
+	if (lock_file) {
+		sh->u.direct.activelock_file_fd =
+			semanage_get_lock(sh, "read lock", lock_file);
+		if (sh->u.direct.activelock_file_fd >= 0) {
+			return 0;
+		}
+	}
+	return -1;
 }
 
 /* Releases the transaction lock.  Does nothing if there was not one already
