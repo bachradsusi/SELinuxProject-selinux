@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <wchar.h>
 #include "label_internal.h"
 
 /*
@@ -35,13 +36,19 @@ static inline int read_spec_entry(char **entry, const char **ptr, size_t *len, c
 	*len = 0;
 
 	while (!isspace((unsigned char)**ptr) && **ptr != '\0') {
-		if (!isascii((unsigned char)**ptr)) {
+		size_t char_len;
+
+		char_len = mbrtowc(NULL, *ptr, MB_CUR_MAX, NULL);
+
+		if ((char_len == (size_t) -1) || (char_len == (size_t) -2)) {
 			errno = EINVAL;
-			*errbuf = "Non-ASCII characters found";
+			*errbuf = "Invalid UTF-8 encoding";
 			return -1;
 		}
-		(*ptr)++;
-		(*len)++;
+
+		*ptr += char_len;
+		*len += char_len;
+
 	}
 
 	if (*len) {

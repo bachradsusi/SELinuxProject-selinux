@@ -7,6 +7,7 @@
 #include <regex.h>
 #include <sys/vfs.h>
 #include <libgen.h>
+#include <locale.h>
 #ifdef USE_AUDIT
 #include <libaudit.h>
 
@@ -152,6 +153,9 @@ int main(int argc, char **argv)
 	union selinux_callback cb;
 	long unsigned skipped_errors;
 	long unsigned relabeled_files;
+
+	/* Initialize locale for UTF-8 support */
+	setlocale(LC_ALL, "");
 
 	/* Initialize variables */
 	memset(&r_opts, 0, sizeof(r_opts));

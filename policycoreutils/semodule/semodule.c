@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <libgen.h>
 #include <limits.h>
+#include <locale.h>
 
 #include <sepol/cil/cil.h>
 #include <semanage/modules.h>
@@ -418,6 +419,10 @@ int main(int argc, char *argv[])
 	int i, commit = 0;
 	int result;
 	int status = EXIT_FAILURE;
+
+	/* Initialize locale for UTF-8 support */
+	setlocale(LC_ALL, "");
+
 	const char *genhomedirconargv[] = { "genhomedircon", "-B", "-n" };
 	create_signal_handlers();
 	if (strcmp(basename(argv[0]), "genhomedircon") == 0) {

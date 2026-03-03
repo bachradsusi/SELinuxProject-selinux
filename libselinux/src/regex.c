@@ -85,9 +85,11 @@ int regex_prepare_data(struct regex_data **regex, char const *pattern_string,
 	if (!(*regex))
 		return -1;
 
-	(*regex)->regex = pcre2_compile(
-	    (PCRE2_SPTR)pattern_string, PCRE2_ZERO_TERMINATED, PCRE2_DOTALL,
-	    &errordata->error_code, &errordata->error_offset, NULL);
+	(*regex)->regex = pcre2_compile((PCRE2_SPTR)pattern_string,
+					PCRE2_ZERO_TERMINATED,
+					PCRE2_DOTALL | PCRE2_UTF | PCRE2_UCP,
+					&errordata->error_code,
+					&errordata->error_offset, NULL);
 	if (!(*regex)->regex) {
 		goto err;
 	}

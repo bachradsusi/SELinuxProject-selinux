@@ -1,6 +1,7 @@
 #include <endian.h>
 #include <errno.h>
 #include <getopt.h>
+#include <locale.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -550,6 +551,10 @@ int main(int argc, char *argv[])
 	struct saved_data *data = NULL;
 	struct spec_node *root = NULL;
 	struct sidtab stab = {};
+
+	/* Initialize locale for UTF-8 support */
+	setlocale(LC_ALL, "");
+
 
 	if (argc < 2)
 		usage(argv[0]);

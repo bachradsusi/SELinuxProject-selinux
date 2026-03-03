@@ -57,6 +57,7 @@ typedef struct dbase_policydb dbase_t;
 #include <sys/wait.h>
 #include <limits.h>
 #include <libgen.h>
+#include <locale.h>
 
 #include "debug.h"
 #include "utilities.h"
@@ -1479,6 +1480,11 @@ static int semanage_exec_prog(semanage_handle_t * sh,
 	char **argv;
 	pid_t forkval;
 	int status = 0;
+	char *envp[] = { NULL, NULL};
+
+	/* we expect that locales are already initialized */
+	if (asprintf(&envp[0], "LC_CTYPE=%s", setlocale(LC_CTYPE, NULL)) == -1)
+		envp[0] = NULL;
 
 	argv = split_args(e->path, e->args, new_name, old_name);
 	if (argv == NULL) {
@@ -1492,11 +1498,13 @@ static int semanage_exec_prog(semanage_handle_t * sh,
 	if (forkval == 0) {
 		/* child process.  file descriptors will be closed
 		 * because they were set as close-on-exec. */
-		execve(e->path, argv, NULL);
+		execve(e->path, argv, envp);
 		_exit(EXIT_FAILURE);	/* if execve() failed */
 	}
 
 	free_argv(argv);
+	if (envp[0])
+		free(envp[0]);
 
 	if (forkval == -1) {
 		ERR(sh, "Error while forking process.");
