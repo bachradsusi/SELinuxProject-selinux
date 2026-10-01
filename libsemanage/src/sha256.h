@@ -71,5 +71,5 @@ void Sha256Finalise(Sha256Context *Context, // [in out]
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Sha256Calculate(void const *Buffer, // [in]
 		     size_t BufferSize, // [in]
-		     SHA256_HASH *Digest // [in]
+		     SHA256_HASH *Digest // [out]
 );

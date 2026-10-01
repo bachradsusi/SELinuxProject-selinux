@@ -181,7 +181,7 @@ void Sha256Update(Sha256Context *Context, // [in out]
 {
 	uint32_t n;
 
-	if (Context->curlen > sizeof(Context->buf)) {
+	if (Context->curlen >= sizeof(Context->buf)) {
 		return;
 	}
 
@@ -263,7 +263,7 @@ void Sha256Finalise(Sha256Context *Context, // [in out]
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Sha256Calculate(void const *Buffer, // [in]
 		     size_t BufferSize, // [in]
-		     SHA256_HASH *Digest // [in]
+		     SHA256_HASH *Digest // [out]
 )
 {
 	Sha256Context context;
