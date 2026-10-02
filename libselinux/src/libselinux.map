@@ -1,3 +1,8 @@
+LIBSELINUX_0 {
+  local:
+    *;
+};
+
 LIBSELINUX_1.0 {
   global:
     avc_add_callback;
@@ -237,9 +242,7 @@ LIBSELINUX_1.0 {
     sidput;
     string_to_av_perm;
     string_to_security_class;
-  local:
-    *;
-};
+} LIBSELINUX_0;
 
 LIBSELINUX_3.4 {
   global:
@@ -271,4 +274,5 @@ LIBSELINUX_3.10 {
 LIBSELINUX_3.12 {
   global:
     selinux_policy_open;
+    selabel_hash_all_partial_matches;
 } LIBSELINUX_3.10;

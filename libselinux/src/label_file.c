@@ -25,6 +25,7 @@
 #include "label_internal.h"
 #include "selinux_internal.h"
 #include "label_file.h"
+#include "sha1.h"
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #define FUZZ_EXTERN
@@ -2453,7 +2454,7 @@ static bool get_digests_all_partial_matches(struct selabel_handle *rec,
 	);
 	uint8_t hash_digest[SHA256_HASH_SIZE];
 	bool status =
-		selabel_hash_all_partial_matches(rec, pathname, hash_digest);
+		rec->func_hash_all_partial_matches(rec, pathname, hash_digest);
 
 	*xattr_digest = NULL;
 	*calculated_digest = NULL;
@@ -2484,6 +2485,37 @@ static bool get_digests_all_partial_matches(struct selabel_handle *rec,
 oom:
 	selinux_log(SELINUX_ERROR, "SELinux: %s: Out of memory\n", __func__);
 	return false;
+}
+
+static bool hash_all_partial_matches_sha1(struct selabel_handle *rec,
+					  const char *key, uint8_t *digest)
+{
+	assert(digest);
+
+	struct lookup_result *matches =
+		lookup_all(rec, key, 0, true, true, NULL);
+	if (!matches)
+		return false;
+
+	Sha256Context context;
+	Sha256Initialise(&context);
+
+	for (const struct lookup_result *m = matches; m; m = m->next) {
+		const char *regex_str = m->regex_str;
+		uint8_t file_kind = m->file_kind;
+		const char *ctx_raw = m->lr->ctx_raw;
+
+		Sha256Update(&context, regex_str, strlen(regex_str) + 1);
+		Sha256Update(&context, &file_kind, sizeof(file_kind));
+		Sha256Update(&context, ctx_raw, strlen(ctx_raw) + 1);
+	}
+
+	SHA256_HASH sha256_hash;
+	Sha256Finalise(&context, &sha256_hash);
+	memcpy(digest, sha256_hash.bytes, SHA256_HASH_SIZE);
+
+	free_lookup_result(matches);
+	return true;
 }
 
 static bool hash_all_partial_matches(struct selabel_handle *rec,
@@ -3064,6 +3096,7 @@ int selabel_file_init(struct selabel_handle *rec,
 	rec->func_get_digests_all_partial_matches =
 		&get_digests_all_partial_matches;
 	rec->func_hash_all_partial_matches = &hash_all_partial_matches;
+	rec->func_hash_all_partial_matches_sha1 = &hash_all_partial_matches_sha1;
 	rec->func_lookup_best_match = &lookup_best_match;
 	rec->func_cmp = &cmp;
 
