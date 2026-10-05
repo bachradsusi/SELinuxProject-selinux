@@ -42,7 +42,7 @@
 #include "callbacks.h"
 #include "selinux_internal.h"
 #include "label_file.h"
-#include "sha1.h"
+#include "sha256.h"
 
 static struct selabel_handle *fc_sehandle = NULL;
 static bool selabel_no_digest;
@@ -364,7 +364,7 @@ static uint64_t exclude_non_seclabel_mounts(void)
 static int add_xattr_entry(const char *directory, bool delete_nonmatch,
 			   bool delete_all)
 {
-	char *sha1_buf = NULL;
+	char *sha256_buf = NULL;
 	size_t i, digest_len = 0;
 	int rc;
 	enum digest_result digest_result;
@@ -385,19 +385,30 @@ static int add_xattr_entry(const char *directory, bool delete_nonmatch,
 
 	if (!xattr_digest || !digest_len) {
 		free(calculated_digest);
+		if (delete_all || delete_nonmatch) {
+			/* legacy 20-byte SHA-1 xattr does not satisfy SHA256_HASH_SIZE, remove it */
+			rc = removexattr(directory,
+					 RESTORECON_PARTIAL_MATCH_DIGEST);
+			if (rc && errno != ENODATA)
+				selinux_log(
+					SELINUX_ERROR,
+					"Error: %m removing xattr \"%s\" from: %s\n",
+					RESTORECON_PARTIAL_MATCH_DIGEST,
+					directory);
+		}
 		return 1;
 	}
 
 	/* Convert entry to a hex encoded string. */
-	sha1_buf = malloc(digest_len * 2 + 1);
-	if (!sha1_buf) {
+	sha256_buf = malloc(digest_len * 2 + 1);
+	if (!sha256_buf) {
 		free(xattr_digest);
 		free(calculated_digest);
 		goto oom;
 	}
 
 	for (i = 0; i < digest_len; i++)
-		sprintf((&sha1_buf[i * 2]), "%02x", xattr_digest[i]);
+		sprintf((&sha256_buf[i * 2]), "%02x", xattr_digest[i]);
 
 	digest_result = match ? MATCH : NOMATCH;
 
@@ -418,7 +429,7 @@ static int add_xattr_entry(const char *directory, bool delete_nonmatch,
 	/* Now add entries to link list. */
 	new_entry = malloc(sizeof(struct dir_xattr));
 	if (!new_entry) {
-		free(sha1_buf);
+		free(sha256_buf);
 		goto oom;
 	}
 	new_entry->next = NULL;
@@ -426,11 +437,11 @@ static int add_xattr_entry(const char *directory, bool delete_nonmatch,
 	new_entry->directory = strdup(directory);
 	if (!new_entry->directory) {
 		free(new_entry);
-		free(sha1_buf);
+		free(sha256_buf);
 		goto oom;
 	}
 
-	new_entry->digest = sha1_buf;
+	new_entry->digest = sha256_buf;
 
 	new_entry->result = digest_result;
 
@@ -441,7 +452,6 @@ static int add_xattr_entry(const char *directory, bool delete_nonmatch,
 		dir_xattr_last->next = new_entry;
 		dir_xattr_last = new_entry;
 	}
-
 	return 0;
 
 oom:
@@ -902,7 +912,7 @@ err:
  * relabeling this directory.
  */
 static bool check_context_match_for_dir(const char *pathname,
-					uint8_t digest_out[SHA1_HASH_SIZE],
+					uint8_t digest_out[SHA256_HASH_SIZE],
 					bool *have_digest)
 {
 	bool status;
@@ -922,8 +932,8 @@ static bool check_context_match_for_dir(const char *pathname,
 
 	/* Save digest of all matched contexts for the current directory. */
 	if (calculated_digest) {
-		assert(digest_len == SHA1_HASH_SIZE);
-		memcpy(digest_out, calculated_digest, SHA1_HASH_SIZE);
+		assert(digest_len == SHA256_HASH_SIZE);
+		memcpy(digest_out, calculated_digest, SHA256_HASH_SIZE);
 		*have_digest = true;
 	}
 
@@ -938,7 +948,7 @@ struct walk_level {
 	dev_t dev;
 	ino_t ino;
 	size_t pathlen;
-	uint8_t digest[SHA1_HASH_SIZE];
+	uint8_t digest[SHA256_HASH_SIZE];
 	bool write_digest;
 };
 
@@ -1269,7 +1279,7 @@ static int walk_next(struct rest_state *state, int *ent_fd, int *rd_fd,
 			    !state->skipped_errors &&
 			    fsetxattr(dirfd(top->dirp),
 				      RESTORECON_PARTIAL_MATCH_DIGEST,
-				      top->digest, SHA1_HASH_SIZE, 0) < 0) {
+				      top->digest, SHA256_HASH_SIZE, 0) < 0) {
 				selinux_log(SELINUX_ERROR,
 					    "Could not set digest on %s: %m\n",
 					    state->pathbuf);
@@ -1438,7 +1448,7 @@ static void *selinux_restorecon_thread(void *arg)
 				continue;
 			}
 
-			uint8_t digest[SHA1_HASH_SIZE];
+			uint8_t digest[SHA256_HASH_SIZE];
 			bool have_digest = false;
 
 			if (descend && state->setrestorecondigest &&
@@ -1470,7 +1480,7 @@ static void *selinux_restorecon_thread(void *arg)
 						&state->stack[state->depth - 1];
 
 					memcpy(wl->digest, digest,
-					       SHA1_HASH_SIZE);
+					       SHA256_HASH_SIZE);
 					wl->write_digest = true;
 				}
 			}

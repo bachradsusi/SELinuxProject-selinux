@@ -338,15 +338,31 @@ bool selabel_get_digests_all_partial_matches(struct selabel_handle *rec,
 		rec, key, calculated_digest, xattr_digest, digest_len);
 }
 
-bool selabel_hash_all_partial_matches(struct selabel_handle *rec,
-				      const char *key, uint8_t *digest)
+bool selabel_hash_all_partial_matches_sha1_compat(struct selabel_handle *rec,
+						  const char *key,
+						  uint8_t *digest);
+bool selabel_hash_all_partial_matches_sha1_compat(struct selabel_handle *rec,
+						  const char *key,
+						  uint8_t *digest)
 {
-	if (!rec->func_hash_all_partial_matches) {
+	if (!rec->func_hash_all_partial_matches_sha1)
 		return false;
-	}
+
+	return rec->func_hash_all_partial_matches_sha1(rec, key, digest);
+}
+__asm__(".symver selabel_hash_all_partial_matches_sha1_compat, selabel_hash_all_partial_matches@LIBSELINUX_1.0");
+
+bool selabel_hash_all_partial_matches_sha256(struct selabel_handle *rec,
+					     const char *key, uint8_t *digest);
+bool selabel_hash_all_partial_matches_sha256(struct selabel_handle *rec,
+					     const char *key, uint8_t *digest)
+{
+	if (!rec->func_hash_all_partial_matches)
+		return false;
 
 	return rec->func_hash_all_partial_matches(rec, key, digest);
 }
+__asm__(".symver selabel_hash_all_partial_matches_sha256, selabel_hash_all_partial_matches@@LIBSELINUX_3.12");
 
 int selabel_lookup_best_match(struct selabel_handle *rec, char **con,
 			      const char *key, const char **aliases, int type)
